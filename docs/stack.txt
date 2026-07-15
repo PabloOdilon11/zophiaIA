@@ -1,0 +1,19 @@
+Python
+        │
+        ▼
+   Streamlit
+        │
+        ▼
+   Pré-processamento
+        │
+        ▼
+Sentence Transformers
+        │
+        ▼
+      FAISS
+        │
+        ▼
+   Modelo GPT
+        │
+        ▼
+     Resposta
