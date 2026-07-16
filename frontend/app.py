@@ -19,15 +19,21 @@ st.markdown('''
 .block-container{max-width:1250px;padding-top:1.5rem;padding-bottom:3rem}
 .hero{background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 45%,#db2777 100%);border-radius:26px;padding:1.6rem 2rem;color:white;box-shadow:0 18px 50px rgba(91,33,182,.24);margin-bottom:1.3rem}
 .hero-grid{display:flex;align-items:center;gap:1.5rem}.hero-logo{width:180px;max-width:28vw;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-.hero h1{color:white;margin:0;font-size:3rem}.hero p{color:rgba(255,255,255,.92);font-size:1.12rem;margin:.65rem 0 0}.hero-badge{display:inline-block;margin-top:.8rem;padding:.38rem .8rem;border-radius:999px;background:rgba(255,255,255,.18);font-size:.82rem;font-weight:700}
+.hero h1{color:white !important;margin:0;font-size:3rem}.hero p{color:rgba(255,255,255,.92) !important;font-size:1.12rem;margin:.65rem 0 0}.hero-badge{display:inline-block;margin-top:.8rem;padding:.38rem .8rem;border-radius:999px;background:rgba(255,255,255,.18);font-size:.82rem;font-weight:700;color:white !important}
 .metric-card,.content-card{background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 28px rgba(15,23,42,.055)}
-.metric-card{min-height:120px;padding:1.1rem}.metric-title{color:#64748b;font-size:.78rem;font-weight:700;text-transform:uppercase}.metric-number{color:#1e293b;font-size:2rem;font-weight:800;margin-top:.2rem}.metric-description{color:#64748b;font-size:.85rem}
-.content-card{padding:1.3rem;margin-bottom:1rem}.content-card h3{color:#312e81;margin:0 0 .7rem;font-size:1.15rem}.content-card p{color:#334155;line-height:1.65;margin:0}.content-card ul{color:#334155;line-height:1.65;margin:.2rem 0 0 1.2rem;padding:0}.content-card li{margin-bottom:.35rem}
-.source-tag{display:inline-block;background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;border-radius:999px;padding:.42rem .78rem;margin:.2rem .25rem .2rem 0;font-size:.88rem;font-weight:700}
-.safety-warning{background:#fff7ed;color:#7c2d12;border:1px solid #fed7aa;border-left:6px solid #f97316;padding:1rem 1.2rem;border-radius:14px;margin-top:1.2rem;line-height:1.6}
-.risk-warning{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-left:6px solid #dc2626;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem;line-height:1.6}
-div.stButton>button{width:100%;border:none;border-radius:13px;padding:.82rem 1.1rem;font-weight:800;font-size:1rem;background:linear-gradient(90deg,#7c3aed,#db2777);color:white}
-[data-testid='stSidebar']{background:linear-gradient(180deg,#111827 0%,#1e1b4b 100%)}[data-testid='stSidebar'] *{color:#f8fafc}#MainMenu,footer{visibility:hidden}
+.metric-card{min-height:120px;padding:1.1rem}.metric-title{color:#64748b !important;font-size:.78rem;font-weight:700;text-transform:uppercase}.metric-number{color:#1e293b !important;font-size:2rem;font-weight:800;margin-top:.2rem}.metric-description{color:#64748b !important;font-size:.85rem}
+.content-card{padding:1.3rem;margin-bottom:1rem}.content-card h3{color:#312e81 !important;margin:0 0 .7rem;font-size:1.15rem}.content-card p{color:#334155 !important;line-height:1.65;margin:0}.content-card ul{color:#334155 !important;line-height:1.65;margin:.2rem 0 0 1.2rem;padding:0}.content-card li{margin-bottom:.35rem;color:#334155 !important}
+.source-tag{display:inline-block;background:#f3e8ff;color:#6b21a8 !important;border:1px solid #e9d5ff;border-radius:999px;padding:.42rem .78rem;margin:.2rem .25rem .2rem 0;font-size:.88rem;font-weight:700}
+.safety-warning{background:#fff7ed;color:#7c2d12 !important;border:1px solid #fed7aa;border-left:6px solid #f97316;padding:1rem 1.2rem;border-radius:14px;margin-top:1.2rem;line-height:1.6}
+.risk-warning{background:#fef2f2;color:#991b1b !important;border:1px solid #fecaca;border-left:6px solid #dc2626;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem;line-height:1.6}
+div.stButton>button{width:100%;border:none;border-radius:13px;padding:.82rem 1.1rem;font-weight:800;font-size:1rem;background:linear-gradient(90deg,#7c3aed,#db2777);color:white !important}
+div.stButton>button *{color:white !important}
+[data-testid='stSidebar']{background:linear-gradient(180deg,#111827 0%,#1e1b4b 100%)}
+[data-testid='stSidebar'] *{color:#f8fafc}
+[data-testid='stSidebar'] [data-testid='stNotification'] *{color:inherit !important}
+[data-testid='stSidebar'] [data-testid='stAlert'] *{color:inherit !important}
+.main p, .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main span, .main label, .main li{color:#1e293b}
+#MainMenu,footer{visibility:hidden}
 </style>
 ''', unsafe_allow_html=True)
 
