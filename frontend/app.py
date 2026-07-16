@@ -15,19 +15,349 @@ LOGO_PATH = BASE_DIR / 'assets' / 'zophia_logo.png'
 
 st.markdown('''
 <style>
-.stApp{background:radial-gradient(circle at 5% 5%,rgba(236,72,153,.10),transparent 25%),radial-gradient(circle at 95% 5%,rgba(124,58,237,.12),transparent 28%),#f8fafc}
-.block-container{max-width:1250px;padding-top:1.5rem;padding-bottom:3rem}
-.hero{background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 45%,#db2777 100%);border-radius:26px;padding:1.6rem 2rem;color:white;box-shadow:0 18px 50px rgba(91,33,182,.24);margin-bottom:1.3rem}
-.hero-grid{display:flex;align-items:center;gap:1.5rem}.hero-logo{width:180px;max-width:28vw;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-.hero h1{color:white;margin:0;font-size:3rem}.hero p{color:rgba(255,255,255,.92);font-size:1.12rem;margin:.65rem 0 0}.hero-badge{display:inline-block;margin-top:.8rem;padding:.38rem .8rem;border-radius:999px;background:rgba(255,255,255,.18);font-size:.82rem;font-weight:700}
-.metric-card,.content-card{background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 28px rgba(15,23,42,.055)}
-.metric-card{min-height:120px;padding:1.1rem}.metric-title{color:#64748b;font-size:.78rem;font-weight:700;text-transform:uppercase}.metric-number{color:#1e293b;font-size:2rem;font-weight:800;margin-top:.2rem}.metric-description{color:#64748b;font-size:.85rem}
-.content-card{padding:1.3rem;margin-bottom:1rem}.content-card h3{color:#312e81;margin:0 0 .7rem;font-size:1.15rem}.content-card p{color:#334155;line-height:1.65;margin:0}.content-card ul{color:#334155;line-height:1.65;margin:.2rem 0 0 1.2rem;padding:0}.content-card li{margin-bottom:.35rem}
-.source-tag{display:inline-block;background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;border-radius:999px;padding:.42rem .78rem;margin:.2rem .25rem .2rem 0;font-size:.88rem;font-weight:700}
-.safety-warning{background:#fff7ed;color:#7c2d12;border:1px solid #fed7aa;border-left:6px solid #f97316;padding:1rem 1.2rem;border-radius:14px;margin-top:1.2rem;line-height:1.6}
-.risk-warning{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-left:6px solid #dc2626;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem;line-height:1.6}
-div.stButton>button{width:100%;border:none;border-radius:13px;padding:.82rem 1.1rem;font-weight:800;font-size:1rem;background:linear-gradient(90deg,#7c3aed,#db2777);color:white}
-[data-testid='stSidebar']{background:linear-gradient(180deg,#111827 0%,#1e1b4b 100%)}[data-testid='stSidebar'] *{color:#f8fafc}#MainMenu,footer{visibility:hidden}
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* Typography & Base Styles */
+html, body, [data-testid="stAppViewContainer"], .stApp {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.stApp {
+    background: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.08), transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(219, 39, 119, 0.08), transparent 40%),
+                #f8fafc;
+}
+
+.block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+    border-radius: 24px;
+    padding: 2.2rem 2.5rem;
+    color: white;
+    box-shadow: 0 20px 40px rgba(124, 58, 237, 0.18);
+    margin-bottom: 1.8rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+    pointer-events: none;
+}
+
+.hero-grid {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.hero-logo {
+    width: 150px;
+    max-width: 25vw;
+    border-radius: 20px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.15);
+    border: 3px solid rgba(255,255,255,0.2);
+}
+
+.hero h1 {
+    color: white !important;
+    margin: 0;
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.hero p {
+    color: rgba(255,255,255,0.9) !important;
+    font-size: 1.15rem;
+    margin: 0.5rem 0 0;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.hero-badge {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white !important;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Metric Cards */
+.metric-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03);
+    min-height: 120px;
+    padding: 1.4rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.08);
+    border-color: #e2e8f0;
+}
+
+.metric-title {
+    color: #64748b !important;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-number {
+    color: #0f172a !important;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-top: 0.3rem;
+    letter-spacing: -0.02em;
+}
+
+.metric-description {
+    color: #64748b !important;
+    font-size: 0.85rem;
+    margin-top: 0.1rem;
+}
+
+/* Content Cards */
+.content-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03);
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.06);
+    border-color: #e2e8f0;
+}
+
+.content-card h3 {
+    color: #312e81 !important;
+    margin: 0 0 0.8rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.content-card p {
+    color: #334155 !important;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.content-card ul {
+    color: #334155 !important;
+    line-height: 1.65;
+    margin: 0.3rem 0 0 1.2rem;
+    padding: 0;
+}
+
+.content-card li {
+    margin-bottom: 0.4rem;
+    color: #334155 !important;
+}
+
+/* Source Tags & Warnings */
+.source-tag {
+    display: inline-block;
+    background: #f3e8ff;
+    color: #6b21a8 !important;
+    border: 1px solid #e9d5ff;
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    margin: 0.25rem 0.3rem 0.25rem 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.source-tag:hover {
+    background: #e9d5ff;
+    transform: translateY(-1px);
+}
+
+.safety-warning {
+    background: #fff7ed;
+    color: #7c2d12 !important;
+    border: 1px solid #fed7aa;
+    border-left: 6px solid #f97316;
+    padding: 1.2rem 1.5rem;
+    border-radius: 16px;
+    margin-top: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.risk-warning {
+    background: #fef2f2;
+    color: #991b1b !important;
+    border: 1px solid #fecaca;
+    border-left: 6px solid #dc2626;
+    padding: 1.2rem 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* Custom Buttons */
+div.stButton > button {
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    padding: 0.85rem 1.2rem;
+    font-weight: 800;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%) !important;
+    color: white !important;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+div.stButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35) !important;
+    background: linear-gradient(135deg, #6d28d9 0%, #be185d 100%) !important;
+}
+
+div.stButton > button:active {
+    transform: translateY(0px) !important;
+}
+
+div.stButton > button * {
+    color: white !important;
+}
+
+/* Sidebar Styling */
+[data-testid='stSidebar'] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%) !important;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-testid='stSidebar'] * {
+    color: #f1f5f9;
+}
+
+[data-testid='stSidebar'] [data-testid='stNotification'] *,
+[data-testid='stSidebar'] [data-testid='stAlert'] * {
+    color: inherit !important;
+}
+
+/* Main Text Overrides */
+.main p, .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main span, .main label, .main li {
+    color: #1e293b;
+}
+
+/* Styling Tabs */
+div[data-testid="stTabBar"] {
+    background-color: transparent !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    gap: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+div[data-testid="stTabBar"] button[data-baseweb="tab"] {
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    color: #64748b !important;
+    border: none !important;
+    padding: 0.6rem 0.2rem !important;
+    transition: all 0.2s ease !important;
+}
+
+div[data-testid="stTabBar"] button[data-baseweb="tab"][aria-selected="true"] {
+    color: #7c3aed !important;
+    border-bottom: 3px solid #7c3aed !important;
+}
+
+/* Styling Expanders */
+div[data-testid="stExpander"] {
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.02) !important;
+    margin-bottom: 0.5rem !important;
+    transition: all 0.3s ease !important;
+}
+
+div[data-testid="stExpander"]:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+    border-color: #cbd5e1 !important;
+}
+
+div[data-testid="stExpander"] > details {
+    border: none !important;
+}
+
+div[data-testid="stExpander"] > details > summary {
+    padding: 1rem 1.2rem !important;
+    border-radius: 16px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+div[data-testid="stExpander"] > details > summary:hover {
+    background-color: #f8fafc !important;
+}
+
+div[data-testid="stExpander"] > details > summary * {
+    font-size: 1.15rem !important;
+    font-weight: 500 !important;
+    color: #312e81 !important;
+    transition: color 0.2s ease !important;
+}
+
+div[data-testid="stExpander"] > details > summary:hover * {
+    color: #7c3aed !important;
+}
+
+div[data-testid="stExpander"] > details[open] > summary {
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-bottom-left-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+    background-color: #f8fafc !important;
+}
+
+div[data-testid="stExpander"] > details > div {
+    padding: 1.2rem !important;
+}
+
+/* Styling Inputs & Text Areas */
+textarea, div[data-baseweb="select"], input {
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
+}
+
+#MainMenu, footer {
+    visibility: hidden;
+}
 </style>
 ''', unsafe_allow_html=True)
 
@@ -54,7 +384,7 @@ def detect_signs(text):
             "anxiety", "anxious", "ansiedade", "ansioso",
             "ansiosa", "panic", "pânico"
         ],
-        "Redução de energia ou motivation": [
+        "Redução de energia ou motivação": [
             "energy", "energia", "motivation", "motivação",
             "bed", "cama", "tired", "cansado", "cansada"
         ],
