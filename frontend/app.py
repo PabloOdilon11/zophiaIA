@@ -19,21 +19,15 @@ st.markdown('''
 .block-container{max-width:1250px;padding-top:1.5rem;padding-bottom:3rem}
 .hero{background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 45%,#db2777 100%);border-radius:26px;padding:1.6rem 2rem;color:white;box-shadow:0 18px 50px rgba(91,33,182,.24);margin-bottom:1.3rem}
 .hero-grid{display:flex;align-items:center;gap:1.5rem}.hero-logo{width:180px;max-width:28vw;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-.hero h1{color:white !important;margin:0;font-size:3rem}.hero p{color:rgba(255,255,255,.92) !important;font-size:1.12rem;margin:.65rem 0 0}.hero-badge{display:inline-block;margin-top:.8rem;padding:.38rem .8rem;border-radius:999px;background:rgba(255,255,255,.18);font-size:.82rem;font-weight:700;color:white !important}
+.hero h1{color:white;margin:0;font-size:3rem}.hero p{color:rgba(255,255,255,.92);font-size:1.12rem;margin:.65rem 0 0}.hero-badge{display:inline-block;margin-top:.8rem;padding:.38rem .8rem;border-radius:999px;background:rgba(255,255,255,.18);font-size:.82rem;font-weight:700}
 .metric-card,.content-card{background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 28px rgba(15,23,42,.055)}
-.metric-card{min-height:120px;padding:1.1rem}.metric-title{color:#64748b !important;font-size:.78rem;font-weight:700;text-transform:uppercase}.metric-number{color:#1e293b !important;font-size:2rem;font-weight:800;margin-top:.2rem}.metric-description{color:#64748b !important;font-size:.85rem}
-.content-card{padding:1.3rem;margin-bottom:1rem}.content-card h3{color:#312e81 !important;margin:0 0 .7rem;font-size:1.15rem}.content-card p{color:#334155 !important;line-height:1.65;margin:0}.content-card ul{color:#334155 !important;line-height:1.65;margin:.2rem 0 0 1.2rem;padding:0}.content-card li{margin-bottom:.35rem;color:#334155 !important}
-.source-tag{display:inline-block;background:#f3e8ff;color:#6b21a8 !important;border:1px solid #e9d5ff;border-radius:999px;padding:.42rem .78rem;margin:.2rem .25rem .2rem 0;font-size:.88rem;font-weight:700}
-.safety-warning{background:#fff7ed;color:#7c2d12 !important;border:1px solid #fed7aa;border-left:6px solid #f97316;padding:1rem 1.2rem;border-radius:14px;margin-top:1.2rem;line-height:1.6}
-.risk-warning{background:#fef2f2;color:#991b1b !important;border:1px solid #fecaca;border-left:6px solid #dc2626;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem;line-height:1.6}
-div.stButton>button{width:100%;border:none;border-radius:13px;padding:.82rem 1.1rem;font-weight:800;font-size:1rem;background:linear-gradient(90deg,#7c3aed,#db2777);color:white !important}
-div.stButton>button *{color:white !important}
-[data-testid='stSidebar']{background:linear-gradient(180deg,#111827 0%,#1e1b4b 100%)}
-[data-testid='stSidebar'] *{color:#f8fafc}
-[data-testid='stSidebar'] [data-testid='stNotification'] *{color:inherit !important}
-[data-testid='stSidebar'] [data-testid='stAlert'] *{color:inherit !important}
-.main p, .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main span, .main label, .main li{color:#1e293b}
-#MainMenu,footer{visibility:hidden}
+.metric-card{min-height:120px;padding:1.1rem}.metric-title{color:#64748b;font-size:.78rem;font-weight:700;text-transform:uppercase}.metric-number{color:#1e293b;font-size:2rem;font-weight:800;margin-top:.2rem}.metric-description{color:#64748b;font-size:.85rem}
+.content-card{padding:1.3rem;margin-bottom:1rem}.content-card h3{color:#312e81;margin:0 0 .7rem;font-size:1.15rem}.content-card p{color:#334155;line-height:1.65;margin:0}.content-card ul{color:#334155;line-height:1.65;margin:.2rem 0 0 1.2rem;padding:0}.content-card li{margin-bottom:.35rem}
+.source-tag{display:inline-block;background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;border-radius:999px;padding:.42rem .78rem;margin:.2rem .25rem .2rem 0;font-size:.88rem;font-weight:700}
+.safety-warning{background:#fff7ed;color:#7c2d12;border:1px solid #fed7aa;border-left:6px solid #f97316;padding:1rem 1.2rem;border-radius:14px;margin-top:1.2rem;line-height:1.6}
+.risk-warning{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-left:6px solid #dc2626;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.2rem;line-height:1.6}
+div.stButton>button{width:100%;border:none;border-radius:13px;padding:.82rem 1.1rem;font-weight:800;font-size:1rem;background:linear-gradient(90deg,#7c3aed,#db2777);color:white}
+[data-testid='stSidebar']{background:linear-gradient(180deg,#111827 0%,#1e1b4b 100%)}[data-testid='stSidebar'] *{color:#f8fafc}#MainMenu,footer{visibility:hidden}
 </style>
 ''', unsafe_allow_html=True)
 
@@ -60,7 +54,7 @@ def detect_signs(text):
             "anxiety", "anxious", "ansiedade", "ansioso",
             "ansiosa", "panic", "pânico"
         ],
-        "Redução de energia ou motivação": [
+        "Redução de energia ou motivation": [
             "energy", "energia", "motivation", "motivação",
             "bed", "cama", "tired", "cansado", "cansada"
         ],
@@ -146,7 +140,7 @@ missing=int(df.isnull().sum().sum()) if df is not None else 0
 avg=round(df['post_content'].astype(str).str.len().mean(),2) if df is not None else 0
 
 with st.sidebar:
-    if LOGO_PATH.exists(): st.image(str(LOGO_PATH),use_container_width=True)
+    if LOGO_PATH.exists(): st.image(str(LOGO_PATH),width='stretch')
     st.success('Semana 1 concluída')
     st.divider()
     if df is not None:
@@ -173,24 +167,27 @@ with d: render_metric('📏','Tamanho médio',avg,'Caracteres por relato')
 analysis_tab,dataset_tab,project_tab=st.tabs(['🔍 Analisar relato','📊 Exploração dos dados','📘 Sobre o projeto'])
 
 with analysis_tab:
-    left,right=st.columns([1.35,.65],gap='large')
-    with left:
-        mode=st.radio('Escolha a forma de entrada:',['Digitar um relato','Selecionar um relato do dataset'],horizontal=True)
-        text=''
-        if mode=='Digitar um relato':
-            text=st.text_area('Digite o relato',height=210,placeholder='Conte como você está se sentindo...')
-        elif df is None:
-            st.error('O dataset não pôde ser carregado.')
-        else:
-            category=st.selectbox('Filtrar por categoria',['Todas',*sorted(df['tag'].astype(str).unique().tolist())])
-            filtered=df if category=='Todas' else df[df['tag']==category]
-            idx=st.selectbox('Selecione um relato',filtered.index.tolist(),format_func=lambda i:f"#{df.loc[i,'id']} — {str(df.loc[i,'post_content'])[:75]}...")
-            text=str(df.loc[idx,'post_content'])
-            st.text_area('Relato selecionado',value=text,height=180,disabled=True)
-        analyze=st.button('✨ Analisar relato',use_container_width=True)
-    with right:
+    mode=st.radio('Escolha a forma de entrada:',['Digitar um relato','Selecionar um relato do dataset'],horizontal=True)
+    text=''
+    if mode=='Digitar um relato':
+        text=st.text_area('Digite o relato',height=210,placeholder='Conte como você está se sentindo...')
+    elif df is None:
+        st.error('O dataset não pôde ser carregado.')
+    else:
+        category=st.selectbox('Filtrar por categoria',['Todas',*sorted(df['tag'].astype(str).unique().tolist())])
+        filtered=df if category=='Todas' else df[df['tag']==category]
+        idx=st.selectbox('Selecione um relato',filtered.index.tolist(),format_func=lambda i:f"#{df.loc[i,'id']} — {str(df.loc[i,'post_content'])[:75]}...")
+        text=str(df.loc[idx,'post_content'])
+        st.text_area('Relato selecionado',value=text,height=180,disabled=True)
+    analyze=st.button('✨ Analisar relato',width='stretch')
+
+    st.write("")
+    inf1,inf2,inf3=st.columns(3,gap='large')
+    with inf1:
         render_card('💡 Como funciona nesta etapa','<p>O protótipo identifica palavras-chave e monta uma resposta simulada.</p>')
+    with inf2:
         render_card('🔄 Fluxo futuro','<p>Relato → embedding → busca vetorial → documentos → prompt → LLM → resposta.</p>')
+    with inf3:
         render_card('🔒 Segurança','<p>O sistema não realiza diagnóstico e não substitui profissionais.</p>')
     if analyze:
         if not text.strip(): st.warning('Digite ou selecione um relato antes de analisar.')
@@ -362,20 +359,25 @@ with dataset_tab:
     else:
         g1,g2=st.columns(2,gap='large')
         with g1:
-            if (OUTPUTS_DIR/'categorias.png').exists(): st.image(str(OUTPUTS_DIR/'categorias.png'),use_container_width=True)
+            if (OUTPUTS_DIR/'categorias.png').exists(): st.image(str(OUTPUTS_DIR/'categorias.png'),width='stretch')
         with g2:
-            if (OUTPUTS_DIR/'tamanho_relatos.png').exists(): st.image(str(OUTPUTS_DIR/'tamanho_relatos.png'),use_container_width=True)
+            if (OUTPUTS_DIR/'tamanho_relatos.png').exists(): st.image(str(OUTPUTS_DIR/'tamanho_relatos.png'),width='stretch')
         table=df['tag'].value_counts().rename_axis('Categoria').reset_index(name='Quantidade')
         table['Percentual']=(table['Quantidade']/len(df)*100).round(2)
-        st.dataframe(table,use_container_width=True,hide_index=True)
-        st.dataframe(df[['id','post_content','tag','timestamp']].head(15),use_container_width=True,hide_index=True)
+        st.dataframe(table,width='stretch',hide_index=True)
+        st.dataframe(df[['id','post_content','tag','timestamp']].head(15),width='stretch',hide_index=True)
 
 with project_tab:
-    st.markdown('## Sobre o Zophia Lite')
-    p1,p2=st.columns(2,gap='large')
-    with p1:
-        render_card('🎯 Objetivo','<p>Desenvolver um assistente conversacional com respostas acolhedoras, educativas e fundamentadas.</p>')
-        render_card('📚 Base documental','<ul><li>WHO mhGAP</li><li>NICE</li><li>Ministério da Saúde</li><li>CVV</li><li>DSM-5-TR autorizado</li></ul>')
-    with p2:
-        render_card('🏗️ Arquitetura','<p>Streamlit → pré-processamento → embeddings → FAISS → busca semântica → prompt → LLM.</p>')
-        render_card('🗓️ Semana 1','<ul><li>EDA concluída.</li><li>Base documental selecionada.</li><li>Arquitetura definida.</li><li>Protótipo funcional.</li></ul>')
+    st.markdown('<h2 style="margin-bottom: 2.2rem; margin-top: 0.5rem;">Sobre o Zophia Lite</h2>', unsafe_allow_html=True)
+    
+    with st.expander('Objetivo', expanded=True):
+        st.markdown('Desenvolver um assistente conversacional com respostas acolhedoras, educativas e fundamentadas.')
+        
+    with st.expander('Base documental'):
+        st.markdown('- WHO mhGAP\n- NICE\n- Ministério da Saúde\n- CVV\n- DSM-5-TR autorizado')
+        
+    with st.expander('Arquitetura'):
+        st.markdown('Streamlit → pré-processamento → embeddings → FAISS → busca semântica → prompt → LLM.')
+        
+    with st.expander('Semana 1'):
+        st.markdown('- EDA concluída.\n- Base documental selecionada.\n- Arquitetura definida.\n- Protótipo funcional.')
