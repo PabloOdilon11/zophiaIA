@@ -457,59 +457,66 @@ def classify_report(text):
     return "neutral"
 
 
-def render_metric(icon,title,number,desc):
-    st.markdown(f"<div class='metric-card'><div style='font-size:1.4rem'>{icon}</div><div class='metric-title'>{title}</div><div class='metric-number'>{number}</div><div class='metric-description'>{desc}</div></div>",unsafe_allow_html=True)
+def render_metric(icon, title, number, desc):
+    st.markdown(f"<div class='metric-card'><div style='font-size:1.4rem'>{icon}</div><div class='metric-title'>{title}</div><div class='metric-number'>{number}</div><div class='metric-description'>{desc}</div></div>", unsafe_allow_html=True)
 
-def render_card(title,body):
-    st.markdown(f"<div class='content-card'><h3>{title}</h3>{body}</div>",unsafe_allow_html=True)
+def render_card(title, body):
+    st.markdown(f"<div class='content-card'><h3>{title}</h3>{body}</div>", unsafe_allow_html=True)
 
-df=load_dataset()
-records=len(df) if df is not None else 0
-cats=int(df['tag'].nunique()) if df is not None else 0
-missing=int(df.isnull().sum().sum()) if df is not None else 0
-avg=round(df['post_content'].astype(str).str.len().mean(),2) if df is not None else 0
+df = load_dataset()
+records = len(df) if df is not None else 0
+cats = int(df['tag'].nunique()) if df is not None else 0
+missing = int(df.isnull().sum().sum()) if df is not None else 0
+avg = round(df['post_content'].astype(str).str.len().mean(), 2) if df is not None else 0
 
 with st.sidebar:
-    if LOGO_PATH.exists(): st.image(str(LOGO_PATH),width='stretch')
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), width='stretch')
     st.success('Semana 1 concluída')
     st.divider()
     if df is not None:
         st.markdown('### Categorias')
-        for cat,count in df['tag'].value_counts().items(): st.write(f'**{cat}:** {int(count)}')
-    st.divider(); st.markdown('### Base documental')
-    for doc in ['WHO mhGAP','NICE — Depressão','NICE — Ansiedade','Ministério da Saúde','Material do CVV','DSM-5-TR autorizado']:
+        for cat, count in df['tag'].value_counts().items():
+            st.write(f'**{cat}:** {int(count)}')
+    st.divider()
+    st.markdown('### Base documental')
+    for doc in ['WHO mhGAP', 'NICE — Depressão', 'NICE — Ansiedade', 'Ministério da Saúde', 'Material do CVV', 'DSM-5-TR autorizado']:
         st.write(f'✓ {doc}')
 
-logo_html=''
+logo_html = ''
 if LOGO_PATH.exists():
-    encoded=base64.b64encode(LOGO_PATH.read_bytes()).decode()
-    logo_html=f"<img class='hero-logo' src='data:image/png;base64,{encoded}'>"
+    encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+    logo_html = f"<img class='hero-logo' src='data:image/png;base64,{encoded}'>"
 st.markdown(f"<div class='hero'><div class='hero-grid'>{logo_html}<div><h1>Zophia Lite</h1><p>Assistente inteligente de apoio educacional em saúde mental, planejado com LLM e RAG.</p><span class='hero-badge'>Protótipo funcional • Semana 1</span></div></div></div>",unsafe_allow_html=True)
 st.info('Esta ferramenta possui finalidade exclusivamente educacional e não substitui atendimento psicológico, psiquiátrico ou médico.')
 
 st.markdown('## Visão geral do projeto')
-a,b,c,d=st.columns(4)
-with a: render_metric('📝','Relatos',records,'Registros disponíveis')
-with b: render_metric('🏷️','Categorias',cats,'Classes do dataset')
-with c: render_metric('✅','Valores ausentes',missing,'Campos incompletos')
-with d: render_metric('📏','Tamanho médio',avg,'Caracteres por relato')
+a, b, c, d = st.columns(4)
+with a:
+    render_metric('📝', 'Relatos', records, 'Registros disponíveis')
+with b:
+    render_metric('🏷️', 'Categorias', cats, 'Classes do dataset')
+with c:
+    render_metric('✅', 'Valores ausentes', missing, 'Campos incompletos')
+with d:
+    render_metric('📏', 'Tamanho médio', avg, 'Caracteres por relato')
 
-analysis_tab,dataset_tab,project_tab=st.tabs(['🔍 Analisar relato','📊 Exploração dos dados','📘 Sobre o projeto'])
+analysis_tab, dataset_tab, project_tab = st.tabs(['🔍 Analisar relato', '📊 Exploração dos dados', '📘 Sobre o projeto'])
 
 with analysis_tab:
-    mode=st.radio('Escolha a forma de entrada:',['Digitar um relato','Selecionar um relato do dataset'],horizontal=True)
-    text=''
-    if mode=='Digitar um relato':
-        text=st.text_area('Digite o relato',height=210,placeholder='Conte como você está se sentindo...')
+    mode = st.radio('Escolha a forma de entrada:', ['Digitar um relato', 'Selecionar um relato do dataset'], horizontal=True)
+    text = ''
+    if mode == 'Digitar um relato':
+        text = st.text_area('Digite o relato', height=210, placeholder='Conte como você está se sentindo...')
     elif df is None:
         st.error('O dataset não pôde ser carregado.')
     else:
-        category=st.selectbox('Filtrar por categoria',['Todas',*sorted(df['tag'].astype(str).unique().tolist())])
-        filtered=df if category=='Todas' else df[df['tag']==category]
-        idx=st.selectbox('Selecione um relato',filtered.index.tolist(),format_func=lambda i:f"#{df.loc[i,'id']} — {str(df.loc[i,'post_content'])[:75]}...")
-        text=str(df.loc[idx,'post_content'])
-        st.text_area('Relato selecionado',value=text,height=180,disabled=True)
-    analyze=st.button('✨ Analisar relato',width='stretch')
+        category = st.selectbox('Filtrar por categoria', ['Todas', *sorted(df['tag'].astype(str).unique().tolist())])
+        filtered = df if category == 'Todas' else df[df['tag'] == category]
+        idx = st.selectbox('Selecione um relato', filtered.index.tolist(), format_func=lambda i: f"#{df.loc[i, 'id']} — {str(df.loc[i, 'post_content'])[:75]}...")
+        text = str(df.loc[idx, 'post_content'])
+        st.text_area('Relato selecionado', value=text, height=180, disabled=True)
+    analyze = st.button('✨ Analisar relato', width='stretch')
 
     st.write("")
     inf1,inf2,inf3=st.columns(3,gap='large')
@@ -520,12 +527,17 @@ with analysis_tab:
     with inf3:
         render_card('🔒 Segurança','<p>O sistema não realiza diagnóstico e não substitui profissionais.</p>')
     if analyze:
-        if not text.strip(): st.warning('Digite ou selecione um relato antes de analisar.')
+        if not text.strip():
+            st.warning('Digite ou selecione um relato antes de analisar.')
         else:
-            p=st.progress(0); msg=st.empty()
-            for i,s in enumerate(['Recebendo o relato...','Validando o texto...','Identificando sinais...','Organizando a resposta...','Finalizando...']):
-                msg.info(s); p.progress((i+1)*20); time.sleep(.2)
-            msg.empty(); p.empty()
+            p = st.progress(0)
+            msg = st.empty()
+            for i, s in enumerate(['Recebendo o relato...', 'Validando o texto...', 'Identificando sinais...', 'Organizando a resposta...', 'Finalizando...']):
+                msg.info(s)
+                p.progress((i + 1) * 20)
+                time.sleep(.2)
+            msg.empty()
+            p.empty()
             report_type = classify_report(text)
             signs = detect_signs(text)
             positive_aspects = detect_positive(text)
@@ -680,22 +692,25 @@ with analysis_tab:
                     )
 
             st.markdown('### 📚 Fontes previstas')
-            st.markdown("<span class='source-tag'>WHO mhGAP</span><span class='source-tag'>NICE Guidelines</span><span class='source-tag'>Ministério da Saúde</span><span class='source-tag'>CVV</span><span class='source-tag'>DSM-5-TR autorizado</span>",unsafe_allow_html=True)
-            st.markdown("<div class='safety-warning'><strong>⚠️ Aviso:</strong> esta resposta é simulada, educacional e não substitui atendimento profissional.</div>",unsafe_allow_html=True)
+            st.markdown("<span class='source-tag'>WHO mhGAP</span><span class='source-tag'>NICE Guidelines</span><span class='source-tag'>Ministério da Saúde</span><span class='source-tag'>CVV</span><span class='source-tag'>DSM-5-TR autorizado</span>", unsafe_allow_html=True)
+            st.markdown("<div class='safety-warning'><strong>⚠️ Aviso:</strong> esta resposta é simulada, educacional e não substitui atendimento profissional.</div>", unsafe_allow_html=True)
 
 with dataset_tab:
     st.markdown('## Exploração do dataset')
-    if df is None: st.error('O dataset não pôde ser carregado.')
+    if df is None:
+        st.error('O dataset não pôde ser carregado.')
     else:
-        g1,g2=st.columns(2,gap='large')
+        g1, g2 = st.columns(2, gap='large')
         with g1:
-            if (OUTPUTS_DIR/'categorias.png').exists(): st.image(str(OUTPUTS_DIR/'categorias.png'),width='stretch')
+            if (OUTPUTS_DIR / 'categorias.png').exists():
+                st.image(str(OUTPUTS_DIR / 'categorias.png'), width='stretch')
         with g2:
-            if (OUTPUTS_DIR/'tamanho_relatos.png').exists(): st.image(str(OUTPUTS_DIR/'tamanho_relatos.png'),width='stretch')
-        table=df['tag'].value_counts().rename_axis('Categoria').reset_index(name='Quantidade')
-        table['Percentual']=(table['Quantidade']/len(df)*100).round(2)
-        st.dataframe(table,width='stretch',hide_index=True)
-        st.dataframe(df[['id','post_content','tag','timestamp']].head(15),width='stretch',hide_index=True)
+            if (OUTPUTS_DIR / 'tamanho_relatos.png').exists():
+                st.image(str(OUTPUTS_DIR / 'tamanho_relatos.png'), width='stretch')
+        table = df['tag'].value_counts().rename_axis('Categoria').reset_index(name='Quantidade')
+        table['Percentual'] = (table['Quantidade'] / len(df) * 100).round(2)
+        st.dataframe(table, width='stretch', hide_index=True)
+        st.dataframe(df[['id', 'post_content', 'tag', 'timestamp']].head(15), width='stretch', hide_index=True)
 
 with project_tab:
     st.markdown('<h2 style="margin-bottom: 2.2rem; margin-top: 0.5rem;">Sobre o Zophia Lite</h2>', unsafe_allow_html=True)
