@@ -64,12 +64,24 @@ Semana 1
 - ✔ Arquitetura
 - ✔ Tecnologias
 - ✔ Organização do Projeto
-- ✔ Protótipo Inicial (em desenvolvimento)
+- 🚧 Protótipo Inicial (em desenvolvimento)
+
+---
+
+## Como executar
+
+Instale as dependências e rode o protótipo com Streamlit:
+
+```bash
+pip install -r requirements.txt
+streamlit run frontend/app.py
+```
 
 ---
 
 ## Integrantes
 
-Pablo Odilon Agra de Queiroz
-
-(Adicionar os demais integrantes)
+- Pablo Odilon Agra de Queiroz
+- Deyvid Jeronimo De Araujo Macedo 
+- Kaio Emanuel Rosemiro de Carvalho
+- Luiz Jose Mendonca Duarte

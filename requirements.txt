@@ -1,8 +1,8 @@
-pandas
-matplotlib
-streamlit
-pymupdf
-sentence-transformers
 faiss-cpu
-python-dotenv
+matplotlib
 openai
+pandas
+pymupdf
+python-dotenv
+sentence-transformers
+streamlit
