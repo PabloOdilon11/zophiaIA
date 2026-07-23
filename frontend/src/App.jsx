@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import RightPanel from './components/RightPanel';
@@ -7,26 +8,46 @@ import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import DocsView from './components/DocsView';
 import MetricsView from './components/MetricsView';
-
 import ToolModal from './components/ToolModal';
+
+const API_URL =
+  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [selectedTool, setSelectedTool] = useState(null);
+
   const [chats, setChats] = useState([
-    { id: '1', title: 'Ansiedade e rotina', messages: [] },
-    { id: '2', title: 'Como lidar com tristeza', messages: [] },
-    { id: '3', title: 'Sono e bem-estar', messages: [] }
+    {
+      id: '1',
+      title: 'Ansiedade e rotina',
+      messages: [],
+    },
+    {
+      id: '2',
+      title: 'Como lidar com tristeza',
+      messages: [],
+    },
+    {
+      id: '3',
+      title: 'Sono e bem-estar',
+      messages: [],
+    },
   ]);
+
   const [activeChatId, setActiveChatId] = useState('1');
   const [isLoading, setIsLoading] = useState(false);
+
   const messagesEndRef = useRef(null);
 
-  const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
+  const activeChat =
+    chats.find((chat) => chat.id === activeChatId) || chats[0];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
   };
 
   useEffect(() => {
@@ -35,72 +56,148 @@ export default function App() {
 
   const handleNewChat = () => {
     const newId = Date.now().toString();
-    const newChat = { id: newId, title: 'Nova conversa', messages: [] };
-    setChats(prev => [newChat, ...prev]);
+
+    const newChat = {
+      id: newId,
+      title: 'Nova conversa',
+      messages: [],
+    };
+
+    setChats((previousChats) => [
+      newChat,
+      ...previousChats,
+    ]);
+
     setActiveChatId(newId);
     setActiveTab('chat');
   };
 
-  const handleSendMessage = async (text) => {
-    if (!text.trim()) return;
+  const addMessageToChat = (chatId, message) => {
+    setChats((previousChats) =>
+      previousChats.map((chat) => {
+        if (chat.id !== chatId) {
+          return chat;
+        }
 
-    // Append user message
-    const userMsg = { id: Date.now().toString(), sender: 'user', text };
-    
-    setChats(prev => prev.map(chat => {
-      if (chat.id === activeChatId) {
-        const title = chat.messages.length === 0 ? text.slice(0, 24) + '...' : chat.title;
         return {
           ...chat,
-          title,
-          messages: [...chat.messages, userMsg]
+          messages: [
+            ...chat.messages,
+            message,
+          ],
         };
-      }
-      return chat;
-    }));
+      }),
+    );
+  };
+
+  const handleSendMessage = async (text) => {
+    const cleanText = text.trim();
+
+    if (!cleanText || isLoading) {
+      return;
+    }
+
+    const currentChatId = activeChatId;
+
+    const userMessage = {
+      id: `${Date.now()}-user`,
+      sender: 'user',
+      text: cleanText,
+    };
+
+    setChats((previousChats) =>
+      previousChats.map((chat) => {
+        if (chat.id !== currentChatId) {
+          return chat;
+        }
+
+        const isFirstMessage = chat.messages.length === 0;
+
+        const newTitle = isFirstMessage
+          ? `${cleanText.slice(0, 24)}${
+              cleanText.length > 24 ? '...' : ''
+            }`
+          : chat.title;
+
+        return {
+          ...chat,
+          title: newTitle,
+          messages: [
+            ...chat.messages,
+            userMessage,
+          ],
+        };
+      }),
+    );
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: cleanText,
+        }),
       });
-      const data = await response.json();
 
-      let botText = "Obrigado por compartilhar o que está sentindo com a Zophia.";
-      if (data.report_type === 'positive') {
-        botText = "Que bom saber que você está vivendo um momento positivo! Reconhecer suas conquistas e sentimentos bons é fundamental para o bem-estar.";
-      } else if (data.report_type === 'distress' || data.report_type === 'risk') {
-        botText = "Agradeço por compartilhar seus sentimentos. É muito importante dar atenção aos sinais de desconforto e buscar acolhimento.";
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          'O backend retornou uma resposta inválida.',
+        );
       }
 
-      const botMsg = {
-        id: (Date.now() + 1).toString(),
+      if (!response.ok) {
+        const errorMessage =
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Não foi possível obter uma resposta da Zophia.';
+
+        throw new Error(errorMessage);
+      }
+
+      if (!data.response) {
+        throw new Error(
+          'A resposta da Zophia veio vazia.',
+        );
+      }
+
+      const zophiaMessage = {
+        id: `${Date.now()}-zophia`,
         sender: 'zophia',
-        text: botText,
-        analysis: data
+        text: data.response,
+        model: data.model,
       };
 
-      setChats(prev => prev.map(chat => {
-        if (chat.id === activeChatId) {
-          return { ...chat, messages: [...chat.messages, botMsg] };
-        }
-        return chat;
-      }));
-    } catch (err) {
-      const fallbackMsg = {
-        id: (Date.now() + 1).toString(),
+      addMessageToChat(
+        currentChatId,
+        zophiaMessage,
+      );
+    } catch (error) {
+      console.error(
+        'Erro ao conectar com a Zophia:',
+        error,
+      );
+
+      const errorMessage = {
+        id: `${Date.now()}-error`,
         sender: 'zophia',
-        text: "Obrigado por compartilhar. A Zophia está aqui para oferecer apoio e escuta atenta aos seus sentimentos."
+        text:
+          'Não consegui me conectar ao serviço da Zophia agora. Verifique se o backend e o Ollama estão ligados e tente novamente.',
+        isError: true,
       };
-      setChats(prev => prev.map(chat => {
-        if (chat.id === activeChatId) {
-          return { ...chat, messages: [...chat.messages, fallbackMsg] };
-        }
-        return chat;
-      }));
+
+      addMessageToChat(
+        currentChatId,
+        errorMessage,
+      );
     } finally {
       setIsLoading(false);
     }
@@ -110,10 +207,15 @@ export default function App() {
     setSelectedTool(tool);
   };
 
+  const handleSelectChat = (chatId) => {
+    setActiveChatId(chatId);
+    setActiveTab('chat');
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-zophia-bg font-body text-zophia-text">
-      {/* Sidebar Navigation */}
-      <Sidebar 
+      <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeTab={activeTab}
@@ -121,55 +223,104 @@ export default function App() {
         chats={chats}
         activeChatId={activeChatId}
         onNewChat={handleNewChat}
-        onSelectChat={(id) => { setActiveChatId(id); setActiveTab('chat'); }}
+        onSelectChat={handleSelectChat}
       />
 
-      {/* Central Content Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
-        <Header onOpenSidebar={() => setSidebarOpen(true)} />
+      <div className="flex h-full min-w-0 flex-1 flex-col">
+        <Header
+          onOpenSidebar={() =>
+            setSidebarOpen(true)
+          }
+        />
 
-        <main className="flex-1 overflow-y-auto relative">
+        <main className="relative flex-1 overflow-y-auto">
           {activeTab === 'chat' && (
             <>
-              {activeChat.messages.length === 0 ? (
-                <WelcomeScreen onSelectSuggestion={handleSendMessage} />
+              {activeChat?.messages.length === 0 ? (
+                <WelcomeScreen
+                  onSelectSuggestion={
+                    handleSendMessage
+                  }
+                />
               ) : (
-                <div className="px-4 py-6 max-w-3xl mx-auto space-y-4">
-                  {activeChat.messages.map(msg => (
-                    <ChatMessage key={msg.id} message={msg} />
-                  ))}
+                <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
+                  {activeChat?.messages.map(
+                    (message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                      />
+                    ),
+                  )}
+
                   {isLoading && (
-                    <div className="flex items-center gap-2.5 text-xs text-zophia-purple font-semibold p-3.5 bg-white/80 rounded-2xl w-fit border border-zophia-border shadow-xs animate-pulse my-2">
+                    <div className="my-2 flex w-fit items-center gap-2.5 rounded-2xl border border-zophia-border bg-white/80 p-3.5 text-xs font-semibold text-zophia-purple shadow-xs animate-pulse">
                       <div className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-zophia-pink animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-zophia-purple animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-zophia-pink animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                        <span
+                          className="h-1.5 w-1.5 animate-bounce rounded-full bg-zophia-pink"
+                          style={{
+                            animationDelay: '0ms',
+                          }}
+                        />
+
+                        <span
+                          className="h-1.5 w-1.5 animate-bounce rounded-full bg-zophia-purple"
+                          style={{
+                            animationDelay: '150ms',
+                          }}
+                        />
+
+                        <span
+                          className="h-1.5 w-1.5 animate-bounce rounded-full bg-zophia-pink"
+                          style={{
+                            animationDelay: '300ms',
+                          }}
+                        />
                       </div>
-                      <span>Zophia está pensando...</span>
+
+                      <span>
+                        Zophia está pensando...
+                      </span>
                     </div>
                   )}
+
                   <div ref={messagesEndRef} />
                 </div>
               )}
             </>
           )}
 
-          {activeTab === 'docs' && <DocsView />}
-          {activeTab === 'metrics' && <MetricsView />}
+          {activeTab === 'docs' && (
+            <DocsView />
+          )}
+
+          {activeTab === 'metrics' && (
+            <MetricsView />
+          )}
         </main>
 
         {activeTab === 'chat' && (
-          <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          <ChatInput
+            onSendMessage={
+              handleSendMessage
+            }
+            isLoading={isLoading}
+          />
         )}
       </div>
 
-      {/* Right Tools Panel */}
       {activeTab === 'chat' && (
-        <RightPanel onSelectTool={handleSelectTool} />
+        <RightPanel
+          onSelectTool={handleSelectTool}
+        />
       )}
 
-      {/* Interactive Tool Modal */}
-      <ToolModal tool={selectedTool} onClose={() => setSelectedTool(null)} />
+      <ToolModal
+        tool={selectedTool}
+        onClose={() =>
+          setSelectedTool(null)
+        }
+      />
     </div>
   );
 }

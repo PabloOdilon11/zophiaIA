@@ -1,182 +1,322 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, Sparkles, CheckCircle2, Info, BookOpen, HelpCircle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2,
+  Info,
+  BookOpen,
+  HelpCircle,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 
 export default function ChatMessage({ message }) {
   const isUser = message.sender === 'user';
   const [showAnalysis, setShowAnalysis] = useState(false);
 
+  const analysis = message.analysis;
+
+  const hasAnalysis =
+    !isUser &&
+    analysis &&
+    typeof analysis === 'object' &&
+    Object.keys(analysis).length > 0;
+
+  const suggestions =
+    analysis?.suggested_cares || analysis?.suggestions || [];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className={`flex gap-3 max-w-3xl mx-auto my-3.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+      initial={{
+        opacity: 0,
+        y: 15,
+        scale: 0.98,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+      }}
+      transition={{
+        duration: 0.28,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className={`mx-auto my-3.5 flex max-w-3xl gap-3 ${
+        isUser ? 'flex-row-reverse' : 'flex-row'
+      }`}
     >
       {/* Avatar */}
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-2xs ${isUser
-          ? 'bg-slate-100 border border-slate-200 text-slate-600 font-semibold text-[11px]'
-          : 'bg-zophia-pink/15 p-1 border border-zophia-pink/30 shadow-2xs'
-        }`}>
-        {isUser ? 'Você' : (
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-2xs ${
+          isUser
+            ? 'border border-slate-200 bg-slate-100 text-[11px] font-semibold text-slate-600'
+            : 'border border-zophia-pink/30 bg-zophia-pink/15 p-1'
+        }`}
+      >
+        {isUser ? (
+          <span>Você</span>
+        ) : (
           <img
             src="/zophia_mini_logo.png"
-            onError={(e) => { e.target.src = '/assets/zophia_mini_logo.png'; }}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src =
+                '/assets/zophia_mini_logo.png';
+            }}
             alt="Zophia"
-            className="w-full h-full object-contain"
+            className="h-full w-full object-contain"
           />
         )}
       </div>
 
-      {/* Message Content */}
-      <div className={`space-y-2.5 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
-        <div className={`text-[11px] font-semibold px-1 text-gray-400 ${isUser ? 'text-right' : 'text-left'}`}>
-          {isUser ? 'Você' : 'Zophia'}
+      {/* Conteúdo da mensagem */}
+      <div
+        className={`max-w-[85%] space-y-2.5 ${
+          isUser ? 'items-end' : 'items-start'
+        }`}
+      >
+        {/*
+          O nome não é mais exibido aqui.
+          O avatar já identifica quem enviou a mensagem.
+          Isso remove a duplicação de "Zophia".
+        */}
+
+        <div
+          className={`rounded-2xl p-4 text-sm leading-relaxed shadow-2xs ${
+            isUser
+              ? 'rounded-tr-xs bg-zophia-purple font-medium text-white'
+              : message.isError
+                ? 'rounded-tl-xs border border-red-200 bg-red-50 text-red-800'
+                : 'rounded-tl-xs border border-zophia-border/80 bg-white text-zophia-text shadow-xs'
+          }`}
+        >
+          <p className="whitespace-pre-wrap break-words">
+            {message.text}
+          </p>
         </div>
 
-        {/* Clean Conversational Chat Bubble */}
-        <div className={`p-4 rounded-2xl leading-relaxed text-sm shadow-2xs ${isUser
-            ? 'bg-zophia-purple text-white rounded-tr-xs font-medium'
-            : 'bg-white border border-zophia-border/80 text-zophia-text rounded-tl-xs shadow-xs'
-          }`}>
-          {message.text}
-        </div>
+        {/* Análise estruturada */}
+        {hasAnalysis && (
+          <div className="w-full space-y-2.5">
+            {analysis.risk_warning && (
+              <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-3 text-red-900 shadow-2xs">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
 
-        {/* Option A: Discretely Toggleable Structured Analysis & RAG Button */}
-        {!isUser && message.analysis && (
-          <div className="space-y-2.5 w-full">
-            {message.analysis.risk_warning && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-900 rounded-2xl flex items-start gap-2.5 shadow-2xs">
-                <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <div className="text-xs leading-relaxed">
-                  <strong>Aviso de Segurança:</strong> Em situações de crise ou sofrimento intenso, busque apoio emergencial ou o serviço CVV (Ligue 188).
+                  <strong>Aviso de segurança:</strong>{' '}
+                  {typeof analysis.risk_warning === 'string'
+                    ? analysis.risk_warning
+                    : 'Em situações de crise ou sofrimento intenso, procure apoio humano imediato e um serviço de emergência.'}
                 </div>
               </div>
             )}
 
             <button
-              onClick={() => setShowAnalysis(!showAnalysis)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-zophia-border hover:border-zophia-pink/40 text-zophia-purple text-xs font-semibold shadow-2xs hover:shadow-xs transition-all duration-200"
+              type="button"
+              onClick={() =>
+                setShowAnalysis((previousValue) => !previousValue)
+              }
+              aria-expanded={showAnalysis}
+              className="flex items-center gap-2 rounded-xl border border-zophia-border bg-white px-3.5 py-2 text-xs font-semibold text-zophia-purple shadow-2xs transition-all duration-200 hover:border-zophia-pink/40 hover:shadow-xs"
             >
-              <Sparkles size={14} className="text-zophia-pink" />
-              <span>{showAnalysis ? 'Ocultar Análise Estruturada & Embasamento RAG' : 'Ver Análise Estruturada & Embasamento RAG'}</span>
-              {showAnalysis ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              <Sparkles
+                size={14}
+                className="text-zophia-pink"
+              />
+
+              <span>
+                {showAnalysis
+                  ? 'Ocultar análise estruturada'
+                  : 'Ver análise estruturada'}
+              </span>
+
+              {showAnalysis ? (
+                <ChevronUp size={14} />
+              ) : (
+                <ChevronDown size={14} />
+              )}
             </button>
 
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {showAnalysis && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
+                  initial={{
+                    opacity: 0,
+                    height: 0,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    height: 'auto',
+                  }}
+                  exit={{
+                    opacity: 0,
+                    height: 0,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                   className="space-y-2.5 overflow-hidden pt-1"
                 >
-                  {/* 1. Resumo Acolhedor */}
-                  <div className="p-3.5 bg-zophia-sidebar rounded-2xl border border-zophia-purple/20 space-y-1 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-zophia-purple font-heading font-bold text-xs">
-                        <Sparkles size={14} className="text-zophia-pink" />
-                        <span>Resumo Acolhedor</span>
-                      </div>
-                      <span className="text-[9px] font-semibold text-zophia-purple bg-zophia-purple/10 px-2 py-0.5 rounded-md">RAG: LLM</span>
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                      {message.analysis.welcoming_summary || message.analysis.summary}
-                    </p>
-                  </div>
+                  {/* Resumo acolhedor */}
+                  {(analysis.welcoming_summary ||
+                    analysis.summary) && (
+                    <div className="space-y-1 rounded-2xl border border-zophia-purple/20 bg-zophia-sidebar p-3.5 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-zophia-purple">
+                          <Sparkles
+                            size={14}
+                            className="text-zophia-pink"
+                          />
 
-                  {/* 2. Sinais Observados */}
-                  {message.analysis.signs && message.analysis.signs.length > 0 && (
-                    <div className="p-3.5 bg-white rounded-2xl border border-zophia-border space-y-2 shadow-2xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                          <Info size={14} className="text-zophia-purple" />
-                          <span>Sinais Observados</span>
+                          <span>Resumo acolhedor</span>
                         </div>
-                        <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">RAG: DSM-5-TR</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {message.analysis.signs.map((sign, i) => (
-                          <span key={i} className="text-xs text-zophia-purple bg-zophia-purple/10 px-2.5 py-0.5 rounded-full font-medium border border-zophia-purple/15">
-                            {sign}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* 3. Informações Educativas */}
-                  {message.analysis.educational_info && (
-                    <div className="p-3.5 bg-white rounded-2xl border border-zophia-border space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                          <BookOpen size={14} className="text-zophia-purple" />
-                          <span>Informações Educativas</span>
-                        </div>
-                        <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">RAG: DSM-5-TR / NICE</span>
+                        <span className="rounded-md bg-zophia-purple/10 px-2 py-0.5 text-[9px] font-semibold text-zophia-purple">
+                          IA
+                        </span>
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                        {message.analysis.educational_info}
+
+                      <p className="text-xs font-medium leading-relaxed text-slate-700">
+                        {analysis.welcoming_summary ||
+                          analysis.summary}
                       </p>
                     </div>
                   )}
 
-                  {/* 4. Cuidados Sugeridos */}
-                  {((message.analysis.suggested_cares && message.analysis.suggested_cares.length > 0) || (message.analysis.suggestions && message.analysis.suggestions.length > 0)) && (
-                    <div className="p-3.5 bg-white rounded-2xl border border-zophia-border space-y-1.5 shadow-2xs">
-                      <div className="flex items-center justify-between">
+                  {/* Sinais observados */}
+                  {Array.isArray(analysis.signs) &&
+                    analysis.signs.length > 0 && (
+                      <div className="space-y-2 rounded-2xl border border-zophia-border bg-white p-3.5 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          <Info
+                            size={14}
+                            className="text-zophia-purple"
+                          />
+
+                          <span>Sinais observados</span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {analysis.signs.map((sign, index) => (
+                            <span
+                              key={`${sign}-${index}`}
+                              className="rounded-full border border-zophia-purple/15 bg-zophia-purple/10 px-2.5 py-0.5 text-xs font-medium text-zophia-purple"
+                            >
+                              {sign}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Informações educativas */}
+                  {analysis.educational_info && (
+                    <div className="space-y-1 rounded-2xl border border-zophia-border bg-white p-3.5 shadow-2xs">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <BookOpen
+                          size={14}
+                          className="text-zophia-purple"
+                        />
+
+                        <span>Informações educativas</span>
+                      </div>
+
+                      <p className="text-xs font-normal leading-relaxed text-slate-600">
+                        {analysis.educational_info}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Cuidados sugeridos */}
+                  {Array.isArray(suggestions) &&
+                    suggestions.length > 0 && (
+                      <div className="space-y-1.5 rounded-2xl border border-zophia-border bg-white p-3.5 shadow-2xs">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
-                          <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                          <span>Cuidados Sugeridos</span>
-                        </div>
-                        <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">RAG: WHO mhGAP / NICE</span>
-                      </div>
-                      <ul className="space-y-1">
-                        {(message.analysis.suggested_cares || message.analysis.suggestions).map((sug, i) => (
-                          <li key={i} className="text-xs text-slate-700 flex items-start gap-2 font-medium leading-relaxed">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>
-                            <span>{sug}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                          <CheckCircle2
+                            size={14}
+                            className="shrink-0 text-emerald-600"
+                          />
 
-                  {/* 5. Quando Procurar Ajuda Profissional */}
-                  {message.analysis.when_to_seek_help && (
-                    <div className="p-3.5 bg-white rounded-2xl border border-zophia-border space-y-1 shadow-2xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-                          <HelpCircle size={14} className="text-amber-600 shrink-0" />
-                          <span>Quando Procurar Ajuda Profissional</span>
+                          <span>Cuidados sugeridos</span>
                         </div>
-                        <span className="text-[9px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md">RAG: mhGAP / RAPS</span>
+
+                        <ul className="space-y-1">
+                          {suggestions.map(
+                            (suggestion, index) => (
+                              <li
+                                key={`${suggestion}-${index}`}
+                                className="flex items-start gap-2 text-xs font-medium leading-relaxed text-slate-700"
+                              >
+                                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+
+                                <span>{suggestion}</span>
+                              </li>
+                            ),
+                          )}
+                        </ul>
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                        {message.analysis.when_to_seek_help}
+                    )}
+
+                  {/* Quando procurar ajuda */}
+                  {analysis.when_to_seek_help && (
+                    <div className="space-y-1 rounded-2xl border border-zophia-border bg-white p-3.5 shadow-2xs">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                        <HelpCircle
+                          size={14}
+                          className="shrink-0 text-amber-600"
+                        />
+
+                        <span>
+                          Quando procurar ajuda profissional
+                        </span>
+                      </div>
+
+                      <p className="text-xs font-normal leading-relaxed text-slate-600">
+                        {analysis.when_to_seek_help}
                       </p>
                     </div>
                   )}
 
-                  {/* 6. Fontes Utilizadas */}
-                  {message.analysis.sources && message.analysis.sources.length > 0 && (
-                    <div className="p-3 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-1">
-                      <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                        <FileText size={13} className="text-zophia-purple" />
-                        <span>Fontes utilizadas (Base Documental RAG):</span>
-                      </div>
-                      <ul className="text-[11px] text-slate-600 space-y-0.5 pl-4 list-disc">
-                        {message.analysis.sources.map((src, i) => (
-                          <li key={i}>{src}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  {/* Fontes */}
+                  {Array.isArray(analysis.sources) &&
+                    analysis.sources.length > 0 && (
+                      <div className="space-y-1 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3">
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                          <FileText
+                            size={13}
+                            className="text-zophia-purple"
+                          />
 
-                  {/* 7. Aviso de Segurança */}
-                  <div className="p-2.5 bg-zophia-bg rounded-2xl border border-zophia-border text-[11px] text-slate-500 leading-relaxed flex items-center gap-2">
-                    <ShieldAlert size={14} className="text-zophia-pink shrink-0" />
-                    <span>{message.analysis.safety_notice || "A Zophia é uma ferramenta educacional e não substitui atendimento médico ou psicológico."}</span>
+                          <span>Fontes utilizadas:</span>
+                        </div>
+
+                        <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-slate-600">
+                          {analysis.sources.map(
+                            (source, index) => (
+                              <li
+                                key={`${source}-${index}`}
+                              >
+                                {source}
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                  {/* Aviso educacional */}
+                  <div className="flex items-center gap-2 rounded-2xl border border-zophia-border bg-zophia-bg p-2.5 text-[11px] leading-relaxed text-slate-500">
+                    <ShieldAlert
+                      size={14}
+                      className="shrink-0 text-zophia-pink"
+                    />
+
+                    <span>
+                      {analysis.safety_notice ||
+                        'A Zophia é uma ferramenta educacional e não substitui atendimento médico ou psicológico.'}
+                    </span>
                   </div>
                 </motion.div>
               )}
