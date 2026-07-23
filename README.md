@@ -6,11 +6,11 @@ O **Zophia** é uma aplicação web moderna voltada para o acolhimento, escuta a
 
 O sistema combina um **Frontend moderno em React** (estilo ChatGPT/Claude) com um **Backend em Python/FastAPI** embasado na arquitetura **Retrieval-Augmented Generation (RAG)** e documentos científicos de referência.
 
-Este projeto está sendo desenvolvido para a disciplina de Inteligência Artificial da Universidade Estadual da Paraíba (**UEPB**).
+Este projeto está sendo desenvolvido para a disciplina de Tópicos Especiais em Computação da Universidade Estadual da Paraíba (**UEPB**).
 
 ---
 
-## 🚀 Status Atual do Projeto
+## Status Atual do Projeto
 
 - **Frontend**: Migrado e reconstruído em **React + Vite + TailwindCSS + Lucide React + Framer Motion**.
 - **Backend**: API REST em **FastAPI + Pydantic** com endpoints de análise estruturada e métricas de dataset.
@@ -19,7 +19,7 @@ Este projeto está sendo desenvolvido para a disciplina de Inteligência Artific
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 ### Frontend
 - **React 18** + **Vite**
@@ -36,7 +36,7 @@ Este projeto está sendo desenvolvido para a disciplina de Inteligência Artific
 
 ---
 
-## 📁 Estrutura de Diretórios
+## Estrutura de Diretórios
 
 ```
 zophiaIA/
@@ -60,7 +60,7 @@ zophiaIA/
 
 ---
 
-## 🛠️ Como Instalar e Rodar o Projeto (Status Atual)
+## Como Instalar e Rodar o Projeto (Status Atual)
 
 ### 1. Clonar a branch `new-frontend`
 ```bash
@@ -113,7 +113,7 @@ npm run dev
 
 ---
 
-## 📋 Estrutura da Resposta RAG (7 Seções)
+## Estrutura da Resposta RAG (7 Seções)
 
 As respostas geradas e disponibilizadas sob demanda seguem os parâmetros da base documental:
 
@@ -127,7 +127,37 @@ As respostas geradas e disponibilizadas sob demanda seguem os parâmetros da bas
 
 ---
 
-## 👥 Integrantes
+## Status
+
+Semana 1
+
+- ✔ Estudo e exploração do Dataset
+- ✔ Seleção dos documentos do RAG
+- ✔ Preparação da base documental
+- ✔ Definição da Arquitetura
+
+Semana 2
+- ✔ Implementar Chunking
+- 🚧 Gerar os embeddings
+- ✔ Criar o banco vetorial
+- 🚧 Validar a busca semântica
+
+Semana 3
+- ✔ Integrar RAG ao LLM
+- ❌ Desenvolver os prompts
+- ❌ Estruturar as Respostas
+- ❌ Validar as fontes recuperadas
+
+Semana 4
+- 🚧 Desenvolver a interface
+- ❌ Realizar testes finais
+- ❌ Fazer a documentação
+- 🚧 Realizar a apresentação
+- ❌ Gravação do vídeo
+
+---
+
+## Integrantes
 
 - Pablo Odilon Agra de Queiroz
 - Deyvid Jeronimo De Araujo Macedo 
