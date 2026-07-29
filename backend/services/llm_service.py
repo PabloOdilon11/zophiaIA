@@ -1,4 +1,3 @@
-import os
 import re
 import unicodedata
 from datetime import datetime
@@ -15,12 +14,6 @@ from backend.services.router import Intent, route_message
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 MODEL_NAME = "gemma3:4b"
 
-# Validação dos resultados recuperados pelo ChromaDB.
-# Em distância cosseno, valores menores indicam maior proximidade.
-MAX_RAG_DISTANCE = float(os.getenv("MAX_RAG_DISTANCE", "0.75"))
-MIN_DOCUMENT_CHARS = int(os.getenv("MIN_DOCUMENT_CHARS", "60"))
-MAX_VALID_CHUNKS = int(os.getenv("MAX_VALID_CHUNKS", "3"))
-
 
 SYSTEM_PROMPT = """
 Você é a Zophia, uma assistente virtual educativa de apoio à saúde mental.
@@ -28,6 +21,17 @@ Você é a Zophia, uma assistente virtual educativa de apoio à saúde mental.
 Sua função é oferecer informações educativas e acolhimento inicial.
 Você não substitui psicólogos, psiquiatras, médicos ou serviços
 de emergência.
+
+IDENTIDADE FIXA:
+- Você é a Zophia Lite.
+- Foi desenvolvida como projeto acadêmico por um grupo de estudantes do curso
+  de Ciência da Computação da Universidade Estadual da Paraíba (UEPB).
+- Utiliza React, FastAPI, Ollama, Gemma 3 4B, ChromaDB, embeddings, RAG e
+  memória de conversa.
+- Você não é o ChatGPT e não foi desenvolvida pela OpenAI, Google, Ollama,
+  Gemma, OMS, Manual MSD ou pelos autores dos documentos da base.
+- Documentos recuperados servem somente como fontes de conteúdo sobre saúde
+  mental e jamais indicam quem criou ou desenvolveu você.
 
 REGRAS OBRIGATÓRIAS:
 
@@ -590,213 +594,211 @@ def _extract_result_value(
     return default
 
 
-def _normalize_document_for_deduplication(document: str) -> str:
-    """Normaliza um trecho para detectar resultados repetidos."""
-
-    return " ".join(_normalize_message(document).split())
-
-
-def _is_valid_distance(distance: Any) -> bool:
-    """
-    Valida a distância retornada pelo ChromaDB. Quando a distância não
-    é fornecida, o trecho pode continuar no fluxo por compatibilidade.
-    """
-
-    if distance is None:
-        return True
-
-    try:
-        numeric_distance = float(distance)
-    except (TypeError, ValueError):
-        return False
-
-    return 0.0 <= numeric_distance <= MAX_RAG_DISTANCE
-
-
-def _build_validated_chunk(
-    document: Any,
-    metadata: Any,
-    distance: Any,
-    seen_documents: set[str],
-) -> dict[str, Any] | None:
-    """Valida conteúdo, relevância, metadados e duplicidade do trecho."""
-
-    if not isinstance(document, str):
-        return None
-
-    document = document.strip()
-
-    if len(document) < MIN_DOCUMENT_CHARS:
-        return None
-
-    if not _is_valid_distance(distance):
-        return None
-
-    if not isinstance(metadata, dict):
-        metadata = {}
-
-    source = metadata.get("source") or metadata.get("filename")
-
-    # Uma fonte sem identificação não pode ser apresentada como confiável.
-    if not isinstance(source, str) or not source.strip():
-        return None
-
-    normalized_document = _normalize_document_for_deduplication(document)
-
-    if not normalized_document or normalized_document in seen_documents:
-        return None
-
-    seen_documents.add(normalized_document)
-
-    page = metadata.get("page", metadata.get("page_number"))
-    chunk = metadata.get("chunk", metadata.get("chunk_index"))
-
-    return {
-        "document": document,
-        "source": source.strip(),
-        "page": page if page is not None else "não informada",
-        "chunk": chunk if chunk is not None else "não informado",
-        "distance": distance,
-    }
-
-
 def _build_document_context(
     rag_results: Any,
 ) -> str:
     """
-    Valida os resultados recuperados e converte somente os trechos
-    confiáveis e relevantes em contexto para a LLM.
+    Converte os resultados do RAG em contexto textual
+    organizado para a LLM.
     """
 
     if not rag_results:
         return ""
 
-    validated_chunks: list[dict[str, Any]] = []
-    seen_documents: set[str] = set()
-    total_candidates = 0
-
-    if isinstance(rag_results, dict) and "results" in rag_results:
-        rag_results = rag_results["results"]
-
-    if isinstance(rag_results, dict) and "documents" in rag_results:
-        documents = rag_results.get("documents", [])
-        metadatas = rag_results.get("metadatas", [])
-        distances = rag_results.get("distances", [])
-
-        if documents and isinstance(documents[0], list):
-            documents = documents[0]
-
-        if metadatas and isinstance(metadatas[0], list):
-            metadatas = metadatas[0]
-
-        if distances and isinstance(distances[0], list):
-            distances = distances[0]
-
-        total_candidates = len(documents)
-
-        for index, document in enumerate(documents):
-            metadata = (
-                metadatas[index]
-                if index < len(metadatas)
-                else {}
-            )
-            distance = (
-                distances[index]
-                if index < len(distances)
-                else None
-            )
-
-            validated = _build_validated_chunk(
-                document=document,
-                metadata=metadata,
-                distance=distance,
-                seen_documents=seen_documents,
-            )
-
-            if validated is not None:
-                validated_chunks.append(validated)
-
-            if len(validated_chunks) >= MAX_VALID_CHUNKS:
-                break
-
-    elif isinstance(rag_results, list):
-        total_candidates = len(rag_results)
-
-        for result in rag_results:
-            document = _extract_result_value(
-                result,
-                ["document", "content", "text", "chunk"],
-                "",
-            )
-            metadata = _extract_result_value(
-                result,
-                ["metadata"],
-                {},
-            ) or {}
-
-            if not isinstance(metadata, dict):
-                metadata = {}
-
-            source = _extract_result_value(
-                result,
-                ["source", "filename"],
-                None,
-            )
-            page = _extract_result_value(
-                result,
-                ["page", "page_number"],
-                None,
-            )
-            chunk = _extract_result_value(
-                result,
-                ["chunk_index"],
-                None,
-            )
-            distance = _extract_result_value(
-                result,
-                ["distance"],
-                None,
-            )
-
-            if source is not None:
-                metadata.setdefault("source", source)
-            if page is not None:
-                metadata.setdefault("page", page)
-            if chunk is not None:
-                metadata.setdefault("chunk", chunk)
-
-            validated = _build_validated_chunk(
-                document=document,
-                metadata=metadata,
-                distance=distance,
-                seen_documents=seen_documents,
-            )
-
-            if validated is not None:
-                validated_chunks.append(validated)
-
-            if len(validated_chunks) >= MAX_VALID_CHUNKS:
-                break
-
-    print(
-        "[RAG VALIDATION] "
-        f"recebidos={total_candidates} | "
-        f"aceitos={len(validated_chunks)} | "
-        f"limite_distancia={MAX_RAG_DISTANCE}"
-    )
-
     formatted_chunks: list[str] = []
 
-    for index, chunk_data in enumerate(validated_chunks, start=1):
-        formatted_chunks.append(
-            f"[TRECHO DOCUMENTAL {index}]\n"
-            f"Documento: {chunk_data['source']}\n"
-            f"Página: {chunk_data['page']}\n"
-            f"Trecho identificado: {chunk_data['chunk']}\n"
-            f"Conteúdo:\n{chunk_data['document']}"
+    if isinstance(rag_results, dict):
+        if "results" in rag_results:
+            rag_results = rag_results["results"]
+
+        elif "documents" in rag_results:
+            documents = rag_results.get(
+                "documents",
+                [],
+            )
+
+            metadatas = rag_results.get(
+                "metadatas",
+                [],
+            )
+
+            distances = rag_results.get(
+                "distances",
+                [],
+            )
+
+            if (
+                documents
+                and isinstance(documents[0], list)
+            ):
+                documents = documents[0]
+
+            if (
+                metadatas
+                and isinstance(metadatas[0], list)
+            ):
+                metadatas = metadatas[0]
+
+            if (
+                distances
+                and isinstance(distances[0], list)
+            ):
+                distances = distances[0]
+
+            for index, document in enumerate(documents):
+                if not isinstance(document, str):
+                    continue
+
+                document = document.strip()
+
+                if not document:
+                    continue
+
+                metadata = (
+                    metadatas[index]
+                    if (
+                        index < len(metadatas)
+                        and isinstance(
+                            metadatas[index],
+                            dict,
+                        )
+                    )
+                    else {}
+                )
+
+                source = metadata.get(
+                    "source",
+                    metadata.get(
+                        "filename",
+                        "Documento não informado",
+                    ),
+                )
+
+                page = metadata.get(
+                    "page",
+                    metadata.get(
+                        "page_number",
+                        "não informada",
+                    ),
+                )
+
+                chunk = metadata.get(
+                    "chunk",
+                    metadata.get(
+                        "chunk_index",
+                        "não informado",
+                    ),
+                )
+
+                formatted_chunks.append(
+                    f"[TRECHO DOCUMENTAL {index + 1}]\n"
+                    f"Documento: {source}\n"
+                    f"Página: {page}\n"
+                    f"Trecho identificado: {chunk}\n"
+                    f"Conteúdo:\n{document}"
+                )
+
+            return "\n\n---\n\n".join(
+                formatted_chunks
+            )
+
+    if not isinstance(rag_results, list):
+        return ""
+
+    for index, result in enumerate(
+        rag_results,
+        start=1,
+    ):
+        document = _extract_result_value(
+            result,
+            [
+                "document",
+                "content",
+                "text",
+                "chunk",
+            ],
+            "",
         )
 
-    return "\n\n---\n\n".join(formatted_chunks)
+        if not isinstance(document, str):
+            continue
+
+        document = document.strip()
+
+        if not document:
+            continue
+
+        metadata = _extract_result_value(
+            result,
+            ["metadata"],
+            {},
+        ) or {}
+
+        source = _extract_result_value(
+            result,
+            ["source", "filename"],
+            None,
+        )
+
+        page = _extract_result_value(
+            result,
+            ["page", "page_number"],
+            None,
+        )
+
+        chunk = _extract_result_value(
+            result,
+            ["chunk_index"],
+            None,
+        )
+
+        if isinstance(metadata, dict):
+            source = source or metadata.get(
+                "source",
+                metadata.get("filename"),
+            )
+
+            if page is None:
+                page = metadata.get(
+                    "page",
+                    metadata.get("page_number"),
+                )
+
+            if chunk is None:
+                chunk = metadata.get(
+                    "chunk",
+                    metadata.get("chunk_index"),
+                )
+
+        source = (
+            source
+            or "Documento não informado"
+        )
+
+        page = (
+            page
+            if page is not None
+            else "não informada"
+        )
+
+        chunk = (
+            chunk
+            if chunk is not None
+            else "não informado"
+        )
+
+        formatted_chunks.append(
+            f"[TRECHO DOCUMENTAL {index}]\n"
+            f"Documento: {source}\n"
+            f"Página: {page}\n"
+            f"Trecho identificado: {chunk}\n"
+            f"Conteúdo:\n{document}"
+        )
+
+    return "\n\n---\n\n".join(
+        formatted_chunks
+    )
+
 
 def _build_user_prompt(
     question: str,
@@ -890,15 +892,13 @@ REGRAS OBRIGATÓRIAS:
 
 def _call_ollama(
     user_prompt: str,
-    *,
-    system_prompt: str = SYSTEM_PROMPT,
 ) -> str:
     """
     Envia o prompt para o Gemma 3 pelo Ollama.
     """
 
     full_prompt = (
-        f"{system_prompt}\n\n"
+        f"{SYSTEM_PROMPT}\n\n"
         f"{user_prompt}"
     )
 
@@ -985,143 +985,72 @@ def _call_ollama(
             "Tente novamente em alguns instantes."
         )
         
-
-GENERAL_SYSTEM_PROMPT = """
-Você é a Zophia, uma assistente virtual educativa.
-
-Responda sempre em português do Brasil, de forma clara, objetiva e natural.
-Para perguntas gerais, use seu conhecimento normalmente, sem mencionar documentos,
-RAG, banco vetorial ou contexto interno.
-
-Não invente fatos quando não souber. Em temas médicos, psicológicos, jurídicos ou
-financeiros, deixe claras as limitações e evite diagnósticos, prescrições ou garantias.
-Não comece a resposta com "Zophia:", "Assistente:" ou "Resposta:".
-""".strip()
-
-
-def _build_general_prompt(
-    question: str,
-    conversation_history: str,
-) -> str:
-    return f"""
-HISTÓRICO RECENTE DA CONVERSA:
-{conversation_history or "Nenhum histórico anterior."}
-
-MENSAGEM ATUAL DO USUÁRIO:
-{question}
-
-Responda diretamente à mensagem atual. Use o histórico somente quando ele for
-necessário para entender referências ou dar continuidade ao assunto.
-""".strip()
+def _about_zophia_response() -> str:
+    """Responde sobre a identidade da Zophia sem consultar RAG ou LLM."""
+    return (
+        "Eu sou a Zophia Lite, uma assistente virtual educativa de apoio à "
+        "saúde mental. Fui desenvolvida como um projeto acadêmico por um "
+        "grupo de estudantes do curso de Ciência da Computação da "
+        "Universidade Estadual da Paraíba (UEPB).\n\n"
+        "Meu objetivo é oferecer informações educativas de forma clara, "
+        "acolhedora e responsável. Minha aplicação utiliza React no frontend, "
+        "FastAPI no backend, o modelo Gemma 3 4B executado localmente pelo "
+        "Ollama, ChromaDB, embeddings, Recuperação Aumentada por Geração "
+        "(RAG) e memória de conversa.\n\n"
+        "Não sou o ChatGPT e não fui criada pela OpenAI, pelo Google, pelo "
+        "Ollama, pelo Gemma nem pelos autores dos documentos da minha base. "
+        "Também não substituo psicólogos, psiquiatras, médicos ou serviços "
+        "de emergência."
+    )
 
 
-def _datetime_response(message: str) -> str:
-    normalized = _normalize_message(message)
+def _datetime_response(question: str) -> str:
+    """Responde data e hora usando o relógio do servidor, sem RAG ou LLM."""
     now = datetime.now()
+    normalized = _normalize_message(question)
 
     weekdays = (
-        "segunda-feira",
-        "terça-feira",
-        "quarta-feira",
-        "quinta-feira",
-        "sexta-feira",
-        "sábado",
-        "domingo",
+        "segunda-feira", "terça-feira", "quarta-feira",
+        "quinta-feira", "sexta-feira", "sábado", "domingo",
     )
-
     months = (
-        "janeiro",
-        "fevereiro",
-        "março",
-        "abril",
-        "maio",
-        "junho",
-        "julho",
-        "agosto",
-        "setembro",
-        "outubro",
-        "novembro",
-        "dezembro",
+        "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+        "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
     )
 
-    if "hora" in normalized or "horario" in normalized:
-        return f"Agora são {now:%H:%M}."
+    asks_time = "hora" in normalized or "horario" in normalized
+    asks_date = any(term in normalized for term in (
+        "data", "dia", "mes", "ano", "semana", "hoje"
+    ))
 
-    if "mes" in normalized:
-        return f"Estamos em {months[now.month - 1]} de {now.year}."
-
-    if "ano" in normalized:
-        return f"Estamos no ano de {now.year}."
-
-    return (
+    time_text = f"Agora são {now:%H:%M}."
+    date_text = (
         f"Hoje é {weekdays[now.weekday()]}, "
         f"{now.day} de {months[now.month - 1]} de {now.year}."
     )
 
+    if asks_time and asks_date:
+        return f"{date_text} {time_text}"
+    if asks_time:
+        return time_text
+    return date_text
 
-def _memory_response(
-    question: str,
-    conversation_id: str,
-) -> str:
-    normalized = _normalize_message(question)
-    messages = conversation_manager.get_messages(conversation_id)
 
-    previous_messages = messages[:-1] if messages else []
-    user_messages = [
-        message.content
-        for message in previous_messages
-        if message.role == "user"
-    ]
-    assistant_messages = [
-        message.content
-        for message in previous_messages
-        if message.role == "assistant"
-    ]
-
-    if not user_messages and not assistant_messages:
-        return "Ainda não há mensagens anteriores nesta conversa."
-
-    if "primeira" in normalized or "primeiro" in normalized:
-        if user_messages:
-            return f'Sua primeira mensagem foi: "{user_messages[0]}"'
-        return "Ainda não encontrei uma mensagem anterior sua nesta conversa."
-
-    if (
-        "ultima mensagem" in normalized
-        or "mensagem anterior" in normalized
-        or "perguntei antes" in normalized
-        or "falei antes" in normalized
-        or "disse antes" in normalized
-    ):
-        if user_messages:
-            return f'Sua mensagem anterior foi: "{user_messages[-1]}"'
-        return "Ainda não encontrei uma mensagem anterior sua nesta conversa."
-
-    if "o que voce respondeu" in normalized:
-        if assistant_messages:
-            return f'Minha resposta anterior foi: "{assistant_messages[-1]}"'
-        return "Ainda não há uma resposta anterior minha nesta conversa."
-
-    history = conversation_manager.build_history(
-        conversation_id=conversation_id,
-        exclude_last_user_message=True,
-    )
-
+def _general_response(question: str, conversation_history: str) -> str:
+    """Responde perguntas gerais sem consultar o banco vetorial."""
     prompt = f"""
-HISTÓRICO DA CONVERSA:
-{history}
+HISTÓRICO RECENTE DA CONVERSA:
+{conversation_history or 'Nenhum histórico anterior.'}
 
-PERGUNTA SOBRE O HISTÓRICO:
+MENSAGEM ATUAL DO USUÁRIO:
 {question}
 
-Responda usando somente o histórico apresentado. Não acrescente informações que
-não estejam nele. Seja breve e não mencione RAG ou documentos.
+Responda de forma natural, clara e objetiva. Não use nem mencione documentos,
+RAG, banco vetorial, páginas ou trechos. Não invente que documentos ou seus
+autores criaram a Zophia. Caso a pergunta seja médica ou psicológica, mantenha
+os limites educativos e não faça diagnóstico nem prescrição.
 """.strip()
-
-    return _call_ollama(
-        prompt,
-        system_prompt=GENERAL_SYSTEM_PROMPT,
-    )
+    return _call_ollama(prompt)
 
 
 CRISIS_EXPRESSIONS = {
@@ -1293,11 +1222,7 @@ async def generate_response(
     question: str,
     conversation_id: str | None = None,
 ) -> dict[str, str]:
-    """
-    Gera uma resposta, mantém o histórico e direciona a mensagem
-    para o serviço correto por meio do roteador de intenções.
-    """
-
+    """Gera a resposta usando o roteador antes de qualquer consulta ao RAG."""
     question = question.strip()
 
     conversation = conversation_manager.get_or_create_conversation(
@@ -1311,41 +1236,44 @@ async def generate_response(
             "conversation_id": current_conversation_id,
         }
 
-    previous_messages = conversation_manager.get_messages(
-        current_conversation_id
-    )
-    has_conversation_history = bool(previous_messages)
-    crisis_active = conversation_manager.is_crisis_active(
-        current_conversation_id
-    )
-
     conversation_manager.add_message(
         conversation_id=current_conversation_id,
         role="user",
         content=question,
     )
 
-    route = route_message(
-        question,
-        has_conversation_history=has_conversation_history,
-        crisis_active=crisis_active,
+    history = conversation_manager.build_history(
+        conversation_id=current_conversation_id,
+        exclude_last_user_message=True,
+    )
+    has_history = bool(history.strip())
+    crisis_active = conversation_manager.is_crisis_active(
+        current_conversation_id
     )
 
+    route = route_message(
+        question,
+        has_conversation_history=has_history,
+        crisis_active=crisis_active,
+    )
     print(
-        "[ROUTER] "
-        f"intent={route.intent.value} | "
-        f"reason={route.reason}"
+        f"[ROUTER] intent={route.intent.value} | reason={route.reason}"
     )
 
     if route.intent == Intent.CRISIS:
-        if crisis_active:
-            response = _crisis_continuation_response(question)
-        else:
+        if _is_crisis_message(question):
             conversation_manager.set_crisis_active(
-                current_conversation_id,
-                True,
+                current_conversation_id, True
             )
             response = _crisis_response()
+        else:
+            response = _crisis_continuation_response(question)
+
+    elif route.intent == Intent.DATETIME:
+        response = _datetime_response(question)
+
+    elif route.intent == Intent.ABOUT_ZOPHIA:
+        response = _about_zophia_response()
 
     elif route.intent == Intent.GREETING:
         response = _greeting_response(question)
@@ -1357,35 +1285,13 @@ async def generate_response(
         response = _goodbye_response()
 
     elif route.intent == Intent.MEMORY:
-        response = _memory_response(
-            question=question,
-            conversation_id=current_conversation_id,
-        )
-
-    elif route.intent == Intent.DATETIME:
-        response = _datetime_response(question)
+        response = _general_response(question, history)
 
     elif route.intent == Intent.GENERAL:
-        conversation_history = conversation_manager.build_history(
-            conversation_id=current_conversation_id,
-            exclude_last_user_message=True,
-        )
-        general_prompt = _build_general_prompt(
-            question=question,
-            conversation_history=conversation_history,
-        )
-        response = _call_ollama(
-            general_prompt,
-            system_prompt=GENERAL_SYSTEM_PROMPT,
-        )
+        response = _general_response(question, history)
 
     else:
-        # MENTAL_HEALTH e CONTEXT_FOLLOW_UP consultam o RAG.
-        conversation_history = conversation_manager.build_history(
-            conversation_id=current_conversation_id,
-            exclude_last_user_message=True,
-        )
-
+        # Somente saúde mental e continuações contextuais chegam ao RAG.
         search_query = conversation_manager.build_search_query(
             conversation_id=current_conversation_id,
             current_question=question,
@@ -1411,7 +1317,7 @@ async def generate_response(
         user_prompt = _build_user_prompt(
             question=question,
             document_context=document_context,
-            conversation_history=conversation_history,
+            conversation_history=history,
         )
         response = _call_ollama(user_prompt)
 

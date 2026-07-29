@@ -28,6 +28,7 @@ class Intent(str, Enum):
     GOODBYE = "goodbye"
     MEMORY = "memory"
     DATETIME = "datetime"
+    ABOUT_ZOPHIA = "about_zophia"
     CONTEXT_FOLLOW_UP = "context_follow_up"
     MENTAL_HEALTH = "mental_health"
     GENERAL = "general"
@@ -187,6 +188,30 @@ DATETIME_PHRASES = (
     "que dia da semana e hoje",
 )
 
+
+ABOUT_ZOPHIA_PHRASES = (
+    "quem e voce",
+    "quem criou voce",
+    "quem te criou",
+    "quem desenvolveu voce",
+    "quem te desenvolveu",
+    "quem fez voce",
+    "quem criou a zophia",
+    "quem desenvolveu a zophia",
+    "voce e da openai",
+    "voce foi criada pela openai",
+    "voce foi desenvolvido pela openai",
+    "voce e o chatgpt",
+    "voce e chatgpt",
+    "voce e da google",
+    "voce foi criada pela google",
+    "qual modelo voce usa",
+    "qual tecnologia voce usa",
+    "como voce funciona",
+    "o que e a zophia",
+    "o que e zophia lite",
+)
+
 CONTEXT_FOLLOW_UP_PATTERNS = (
     r"continue",
     r"continua",
@@ -305,6 +330,11 @@ def is_datetime_question(message: str) -> bool:
     return _contains_phrase(normalized, DATETIME_PHRASES)
 
 
+def is_about_zophia_question(message: str) -> bool:
+    normalized = normalize_text(message)
+    return _contains_phrase(normalized, ABOUT_ZOPHIA_PHRASES)
+
+
 def is_context_follow_up(message: str) -> bool:
     normalized = normalize_text(message)
 
@@ -358,10 +388,11 @@ def route_message(
     2. crise atual ou crise já ativa;
     3. memória;
     4. data/hora;
-    5. saudação, agradecimento ou despedida;
-    6. continuação contextual;
-    7. saúde mental;
-    8. conhecimento geral.
+    5. identidade da Zophia;
+    6. saudação, agradecimento ou despedida;
+    7. continuação contextual;
+    8. saúde mental;
+    9. conhecimento geral.
     """
     normalized = normalize_text(message)
 
@@ -398,6 +429,13 @@ def route_message(
             intent=Intent.DATETIME,
             normalized_message=normalized,
             reason="A pergunta solicita data ou hora atual.",
+        )
+
+    if is_about_zophia_question(normalized):
+        return RouteResult(
+            intent=Intent.ABOUT_ZOPHIA,
+            normalized_message=normalized,
+            reason="A pergunta solicita informações sobre a identidade da Zophia.",
         )
 
     if is_greeting(normalized):
