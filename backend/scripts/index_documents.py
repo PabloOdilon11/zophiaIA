@@ -14,6 +14,7 @@ DOCUMENTS_PATH = Path("backend/knowledge/documentos")
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
+DELETE_BATCH_SIZE = 500
 
 
 def clean_text(text: str) -> str:
@@ -38,9 +39,25 @@ def split_text(
     para evitar perda de contexto.
     """
 
-    chunks = []
+    if chunk_size <= 0:
+        raise ValueError(
+            "CHUNK_SIZE deve ser maior que zero."
+        )
+
+    if overlap < 0:
+        raise ValueError(
+            "CHUNK_OVERLAP não pode ser negativo."
+        )
+
+    if overlap >= chunk_size:
+        raise ValueError(
+            "CHUNK_OVERLAP deve ser menor que CHUNK_SIZE."
+        )
+
+    chunks: List[str] = []
 
     start = 0
+    step = chunk_size - overlap
 
     while start < len(text):
         end = start + chunk_size
@@ -50,13 +67,32 @@ def split_text(
         if chunk:
             chunks.append(chunk)
 
-        start += chunk_size - overlap
+        start += step
 
     return chunks
 
 
+def calculate_file_hash(pdf_path: Path) -> str:
+    """
+    Calcula o SHA256 do arquivo para identificar PDFs duplicados.
+    """
+
+    sha256 = hashlib.sha256()
+
+    with pdf_path.open("rb") as file:
+        while True:
+            data = file.read(1024 * 1024)
+
+            if not data:
+                break
+
+            sha256.update(data)
+
+    return sha256.hexdigest()
+
+
 def create_chunk_id(
-    filename: str,
+    file_hash: str,
     page_number: int,
     chunk_number: int,
     text: str,
@@ -66,7 +102,7 @@ def create_chunk_id(
     """
 
     raw_id = (
-        f"{filename}-"
+        f"{file_hash}-"
         f"{page_number}-"
         f"{chunk_number}-"
         f"{text}"
@@ -77,7 +113,85 @@ def create_chunk_id(
     ).hexdigest()
 
 
-async def index_pdf(pdf_path: Path) -> int:
+def clear_collection() -> None:
+    """
+    Remove todos os trechos antigos antes de uma nova
+    indexação completa.
+    """
+
+    total_before = collection.count()
+
+    if total_before == 0:
+        print("Banco vetorial já está vazio.")
+        return
+
+    print(
+        f"\nRemovendo {total_before} trechos antigos..."
+    )
+
+    existing_data = collection.get(
+        include=[]
+    )
+
+    existing_ids = existing_data.get("ids", [])
+
+    for start in range(
+        0,
+        len(existing_ids),
+        DELETE_BATCH_SIZE,
+    ):
+        batch_ids = existing_ids[
+            start:start + DELETE_BATCH_SIZE
+        ]
+
+        collection.delete(ids=batch_ids)
+
+    print(
+        f"Banco limpo. Total atual: {collection.count()}"
+    )
+
+
+def find_unique_pdfs(
+    pdf_files: List[Path],
+) -> List[tuple[Path, str]]:
+    """
+    Detecta PDFs idênticos pelo hash SHA256 e mantém
+    somente uma cópia para indexação.
+    """
+
+    unique_files: List[tuple[Path, str]] = []
+    seen_hashes: dict[str, Path] = {}
+
+    for pdf_path in sorted(pdf_files):
+        file_hash = calculate_file_hash(pdf_path)
+
+        duplicate_of = seen_hashes.get(file_hash)
+
+        if duplicate_of is not None:
+            print(
+                f"\nPDF duplicado ignorado: {pdf_path.name}"
+            )
+            print(
+                f"Conteúdo idêntico a: {duplicate_of.name}"
+            )
+            continue
+
+        seen_hashes[file_hash] = pdf_path
+
+        unique_files.append(
+            (
+                pdf_path,
+                file_hash,
+            )
+        )
+
+    return unique_files
+
+
+async def index_pdf(
+    pdf_path: Path,
+    file_hash: str,
+) -> int:
     """
     Lê um PDF, divide o conteúdo e salva no ChromaDB.
     """
@@ -97,7 +211,8 @@ async def index_pdf(pdf_path: Path) -> int:
 
         if not text:
             print(
-                f"Página {page_number}: nenhum texto encontrado."
+                f"Página {page_number}: "
+                "nenhum texto encontrado."
             )
             continue
 
@@ -107,7 +222,7 @@ async def index_pdf(pdf_path: Path) -> int:
             embedding = await generate_embedding(chunk)
 
             chunk_id = create_chunk_id(
-                filename=pdf_path.name,
+                file_hash=file_hash,
                 page_number=page_number,
                 chunk_number=chunk_index,
                 text=chunk,
@@ -122,6 +237,7 @@ async def index_pdf(pdf_path: Path) -> int:
                         "source": pdf_path.name,
                         "page": page_number,
                         "chunk": chunk_index,
+                        "file_hash": file_hash,
                     }
                 ],
             )
@@ -136,9 +252,10 @@ async def index_pdf(pdf_path: Path) -> int:
     return indexed_chunks
 
 
-async def main():
+async def main() -> None:
     """
-    Procura todos os PDFs e realiza a indexação.
+    Limpa o banco, procura os PDFs e realiza
+    uma nova indexação completa.
     """
 
     if not DOCUMENTS_PATH.exists():
@@ -170,17 +287,42 @@ async def main():
 
         return
 
-    total_chunks = 0
+    unique_pdfs = find_unique_pdfs(pdf_files)
 
-    for pdf_path in pdf_files:
+    if not unique_pdfs:
+        print(
+            "Nenhum PDF válido foi encontrado para indexação."
+        )
+        return
+
+    print(
+        f"\nPDFs encontrados: {len(pdf_files)}"
+    )
+
+    print(
+        f"PDFs únicos: {len(unique_pdfs)}"
+    )
+
+    clear_collection()
+
+    total_chunks = 0
+    failed_files = 0
+
+    for pdf_path, file_hash in unique_pdfs:
         try:
-            total = await index_pdf(pdf_path)
+            total = await index_pdf(
+                pdf_path=pdf_path,
+                file_hash=file_hash,
+            )
 
             total_chunks += total
 
         except Exception as error:
+            failed_files += 1
+
             print(
-                f"\nErro ao indexar {pdf_path.name}: {error}"
+                f"\nErro ao indexar "
+                f"{pdf_path.name}: {error}"
             )
 
     print("\nIndexação concluída.")
@@ -192,6 +334,11 @@ async def main():
     print(
         f"Total no banco vetorial: {collection.count()}"
     )
+
+    if failed_files:
+        print(
+            f"Arquivos que apresentaram erro: {failed_files}"
+        )
 
 
 if __name__ == "__main__":

@@ -1,39 +1,51 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.services.llm_service import generate_llm_response
+from backend.services.llm_service import generate_response
 
-router = APIRouter(prefix="/chat", tags=["Chat"])
+
+router = APIRouter(
+    prefix="/api",
+    tags=["Chat"],
+)
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
+    message: str = Field(
+        ...,
+        min_length=1,
+        max_length=3000,
+    )
+
+    conversation_id: str | None = None
 
 
-class ChatResponse(BaseModel):
-    response: str
-    model: str = "gemma3:4b"
+@router.post("/chat")
+async def chat(request: ChatRequest):
+    message = request.message.strip()
 
-
-@router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
-    try:
-        answer = await generate_llm_response(
-            request.message
-        )
-
-        return ChatResponse(
-            response=answer,
-        )
-
-    except ValueError as error:
+    if not message:
         raise HTTPException(
             status_code=400,
-            detail=str(error),
-        ) from error
+            detail="A mensagem não pode estar vazia.",
+        )
 
-    except RuntimeError as error:
+    try:
+        result = await generate_response(
+            question=message,
+            conversation_id=request.conversation_id,
+        )
+
+        return {
+            "response": result["response"],
+            "conversation_id": result["conversation_id"],
+            "model": "gemma3:4b",
+        }
+
+    except Exception as error:
+        print(f"Erro na rota de chat: {error}")
+
         raise HTTPException(
-            status_code=503,
-            detail=str(error),
+            status_code=500,
+            detail="Não foi possível gerar a resposta.",
         ) from error

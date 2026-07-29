@@ -21,16 +21,19 @@ export default function App() {
   const [chats, setChats] = useState([
     {
       id: '1',
+      conversationId: null,
       title: 'Ansiedade e rotina',
       messages: [],
     },
     {
       id: '2',
+      conversationId: null,
       title: 'Como lidar com tristeza',
       messages: [],
     },
     {
       id: '3',
+      conversationId: null,
       title: 'Sono e bem-estar',
       messages: [],
     },
@@ -40,6 +43,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const conversationIdsRef = useRef({});
 
   const activeChat =
     chats.find((chat) => chat.id === activeChatId) || chats[0];
@@ -59,6 +63,7 @@ export default function App() {
 
     const newChat = {
       id: newId,
+      conversationId: null,
       title: 'Nova conversa',
       messages: [],
     };
@@ -90,6 +95,31 @@ export default function App() {
     );
   };
 
+  const saveConversationId = (
+    chatId,
+    conversationId,
+  ) => {
+    if (!conversationId) {
+      return;
+    }
+
+    // Atualiza imediatamente, sem depender do tempo do setState.
+    conversationIdsRef.current[chatId] = conversationId;
+
+    setChats((previousChats) =>
+      previousChats.map((chat) => {
+        if (chat.id !== chatId) {
+          return chat;
+        }
+
+        return {
+          ...chat,
+          conversationId,
+        };
+      }),
+    );
+  };
+
   const handleSendMessage = async (text) => {
     const cleanText = text.trim();
 
@@ -98,6 +128,15 @@ export default function App() {
     }
 
     const currentChatId = activeChatId;
+
+    const currentChat = chats.find(
+      (chat) => chat.id === currentChatId,
+    );
+
+    const currentConversationId =
+      conversationIdsRef.current[currentChatId] ??
+      currentChat?.conversationId ??
+      null;
 
     const userMessage = {
       id: `${Date.now()}-user`,
@@ -111,7 +150,8 @@ export default function App() {
           return chat;
         }
 
-        const isFirstMessage = chat.messages.length === 0;
+        const isFirstMessage =
+          chat.messages.length === 0;
 
         const newTitle = isFirstMessage
           ? `${cleanText.slice(0, 24)}${
@@ -133,16 +173,21 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${API_URL}/api/chat`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: cleanText,
+            conversation_id:
+              currentConversationId,
+          }),
         },
-        body: JSON.stringify({
-          message: cleanText,
-        }),
-      });
+      );
 
       let data;
 
@@ -168,6 +213,11 @@ export default function App() {
           'A resposta da Zophia veio vazia.',
         );
       }
+
+      saveConversationId(
+        currentChatId,
+        data.conversation_id,
+      );
 
       const zophiaMessage = {
         id: `${Date.now()}-zophia`,

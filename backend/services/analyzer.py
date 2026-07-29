@@ -1,139 +1,438 @@
-import html
-from pathlib import Path
+import os
+import re
+import unicodedata
+from typing import Any
+
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DATASET_PATH = BASE_DIR / 'dataset' / 'mental_health_social_media_posts.csv'
 
-def load_dataset():
-    if not DATASET_PATH.exists():
-        return None
-    try:
-        return pd.read_csv(DATASET_PATH)
-    except Exception:
-        return None
+DATASET_PATH = os.getenv(
+    "DATASET_PATH",
+    "datasets/mental_health_social_media_posts.csv",
+)
 
-def detect_signs(text: str):
-    t = text.lower()
-    signs = []
-    groups = {
-        "Alterações no sono": ["sleep", "insomnia", "dormir", "sono", "insônia"],
-        "Tristeza ou desânimo": ["sad", "sadness", "triste", "tristeza", "despair", "desespero", "vazio", "vazia"],
-        "Sinais relacionados à ansiedade": ["anxiety", "anxious", "ansiedade", "ansioso", "ansiosa", "panic", "pânico"],
-        "Redução de energia ou motivação": ["energy", "energia", "motivation", "motivação", "bed", "cama", "tired", "cansado", "cansada"],
-        "Dificuldade de concentração": ["focus", "concentrate", "concentração", "concentrar", "attention", "atenção"],
-    }
-    for sign, keys in groups.items():
-        if any(key in t for key in keys):
-            signs.append(sign)
-    return signs
 
-def detect_positive(text: str):
-    t = text.lower()
-    aspects = []
-    groups = {
-        "Emoções positivas": ["feliz", "alegre", "contente", "animado", "animada", "happy", "great", "ótimo", "otimo", "incrível", "incrivel"],
-        "Sentimento de realização": ["consegui", "passei", "ganhei", "conquista", "conquistei", "aprovado", "aprovada", "emprego", "estágio", "estagio"],
-        "Esperança e motivação": ["esperança", "esperanca", "motivado", "motivada", "confiante", "empolgado", "empolgada"],
-        "Gratidão": ["grato", "grata", "gratidão", "gratidao", "agradecido", "agradecida"],
-    }
-    for aspect, keys in groups.items():
-        if any(key in t for key in keys):
-            aspects.append(aspect)
-    return aspects
+ANXIETY_TERMS = {
+    "ansiedade",
+    "ansioso",
+    "ansiosa",
+    "nervoso",
+    "nervosa",
+    "preocupado",
+    "preocupada",
+    "preocupacao",
+    "preocupação",
+    "panico",
+    "pânico",
+    "medo",
+    "agitado",
+    "agitada",
+    "inquieto",
+    "inquieta",
+    "palpitacao",
+    "palpitação",
+}
 
-def detect_risk(text: str):
-    t = text.lower()
-    terms = [
-        "suicidal", "suicide", "kill myself", "end my life",
-        "me matar", "tirar minha vida", "não quero viver",
-        "nao quero viver", "acabar com minha vida"
-    ]
-    return any(term in t for term in terms)
+DEPRESSION_TERMS = {
+    "depressao",
+    "depressão",
+    "deprimido",
+    "deprimida",
+    "triste",
+    "tristeza",
+    "desanimado",
+    "desanimada",
+    "vazio",
+    "vazia",
+    "sem energia",
+    "sem vontade",
+    "isolado",
+    "isolada",
+    "sozinho",
+    "sozinha",
+}
 
-def classify_report(text: str):
+RISK_TERMS = {
+    "quero morrer",
+    "vou me matar",
+    "me matar",
+    "suicidio",
+    "suicídio",
+    "suicida",
+    "tirar minha vida",
+    "acabar com minha vida",
+    "nao quero viver",
+    "não quero viver",
+    "seria melhor morrer",
+    "queria desaparecer",
+}
+
+POSITIVE_TERMS = {
+    "feliz",
+    "bem",
+    "otimo",
+    "ótimo",
+    "melhor",
+    "animado",
+    "animada",
+    "tranquilo",
+    "tranquila",
+    "esperancoso",
+    "esperançoso",
+    "esperancosa",
+    "esperançosa",
+}
+
+
+def _normalize_text(text: str) -> str:
+    normalized = unicodedata.normalize(
+        "NFD",
+        str(text).lower(),
+    )
+
+    normalized = "".join(
+        character
+        for character in normalized
+        if unicodedata.category(character) != "Mn"
+    )
+
+    normalized = re.sub(
+        r"\s+",
+        " ",
+        normalized,
+    )
+
+    return normalized.strip()
+
+
+def _find_terms(
+    text: str,
+    terms: set[str],
+) -> list[str]:
+    normalized_text = _normalize_text(text)
+
+    found_terms = []
+
+    for term in terms:
+        normalized_term = _normalize_text(term)
+
+        if normalized_term in normalized_text:
+            found_terms.append(term)
+
+    return sorted(set(found_terms))
+
+
+def detect_risk(text: str) -> list[str]:
+    return _find_terms(
+        text,
+        RISK_TERMS,
+    )
+
+
+def detect_anxiety(text: str) -> list[str]:
+    return _find_terms(
+        text,
+        ANXIETY_TERMS,
+    )
+
+
+def detect_depression(text: str) -> list[str]:
+    return _find_terms(
+        text,
+        DEPRESSION_TERMS,
+    )
+
+
+def detect_positive(text: str) -> list[str]:
+    return _find_terms(
+        text,
+        POSITIVE_TERMS,
+    )
+
+
+def classify_report(text: str) -> str:
     if detect_risk(text):
         return "risk"
-    positive = detect_positive(text)
-    negative = detect_signs(text)
-    if positive and not negative:
+
+    anxiety_signs = detect_anxiety(text)
+    depression_signs = detect_depression(text)
+
+    if anxiety_signs and depression_signs:
+        return "mixed_distress"
+
+    if anxiety_signs:
+        return "anxiety"
+
+    if depression_signs:
+        return "depression"
+
+    if detect_positive(text):
         return "positive"
-    if negative:
-        return "distress"
+
     return "neutral"
 
-def analyze_report(text: str):
-    report_type = classify_report(text)
-    signs = detect_signs(text)
-    positive_aspects = detect_positive(text)
-    risk = (report_type == "risk")
 
-    if report_type == "positive":
-        welcoming_summary = "Que bom saber que você está vivendo um momento positivo! O seu relato demonstra sentimentos de satisfação e bem-estar em relação à experiência compartilhada."
-        educational_info = "Reconhecer conquistas e momentos agradáveis fortalece a saúde emocional e amplia a resiliência diária."
-        suggested_cares = [
-            "Valorizar e registrar suas conquistas em um diário.",
-            "Compartilhar essa alegria com pessoas de sua confiança.",
-            "Manter hábitos saudáveis de descanso e lazer que favoreçam esse bem-estar."
+def analyze_report(text: str) -> dict[str, Any]:
+    clean_text = str(text).strip()
+
+    if not clean_text:
+        raise ValueError(
+            "O texto para análise não pode estar vazio."
+        )
+
+    classification = classify_report(clean_text)
+
+    anxiety_signs = detect_anxiety(clean_text)
+    depression_signs = detect_depression(clean_text)
+    risk_signs = detect_risk(clean_text)
+    positive_signs = detect_positive(clean_text)
+
+    observed_signs = sorted(
+        set(
+            anxiety_signs
+            + depression_signs
+            + risk_signs
+            + positive_signs
+        )
+    )
+
+    if classification == "risk":
+        summary = (
+            "Foram identificadas expressões que podem indicar "
+            "risco ou sofrimento emocional intenso."
+        )
+
+        educational_information = (
+            "Uma análise automática não consegue determinar com segurança "
+            "a situação da pessoa. Expressões relacionadas à morte ou à "
+            "autolesão precisam ser tratadas com atenção imediata."
+        )
+
+        recommendations = [
+            "Procure imediatamente uma pessoa de confiança.",
+            "Não permaneça sozinho enquanto estiver em risco.",
+            "Busque um serviço de emergência ou atendimento profissional.",
         ]
-        when_to_seek_help = "Mesmo em períodos positivos, manter o acompanhamento com profissionais de saúde mental ajuda na prevenção e no autoconhecimento contínuo."
-    elif report_type == "neutral":
-        welcoming_summary = "Obrigado por compartilhar o seu relato. A mensagem traz uma narrativa serena, sem indícios preponderantes de tensão ou sofrimento."
-        educational_info = "Relatos mais neutros ou breves trazem pontos de reflexão geral sobre a rotina sem indicar quadro clínico específico."
-        suggested_cares = [
-            "Observar como a situação faz você se sentir ao longo do dia.",
-            "Compartilhar mais detalhes com a Zophia caso deseje aprofundar pensamentos.",
-            "Manter uma rotina equilibrada de sono, alimentação e pausa."
+
+        when_to_seek_help = (
+            "Procure atendimento de emergência imediatamente caso exista "
+            "intenção, planejamento ou risco de se machucar."
+        )
+
+    elif classification == "anxiety":
+        summary = (
+            "O texto contém palavras associadas a preocupação, "
+            "medo ou ansiedade."
+        )
+
+        educational_information = (
+            "Esses termos podem aparecer em diferentes situações e não são "
+            "suficientes para indicar um diagnóstico."
+        )
+
+        recommendations = [
+            "Observe há quanto tempo esses sentimentos estão acontecendo.",
+            "Converse com uma pessoa de confiança.",
+            "Considere procurar um profissional de saúde mental.",
         ]
-        when_to_seek_help = "Busque atendimento profissional caso perceba mudanças repentinas de humor, episódios frequentes de ansiedade ou dificuldades prolongadas para dormir."
+
+        when_to_seek_help = (
+            "Procure ajuda profissional quando o sofrimento for frequente, "
+            "intenso ou estiver prejudicando sua rotina."
+        )
+
+    elif classification == "depression":
+        summary = (
+            "O texto contém palavras relacionadas a tristeza, "
+            "desânimo ou isolamento."
+        )
+
+        educational_information = (
+            "A presença dessas palavras não confirma um transtorno. "
+            "Uma avaliação adequada deve ser feita por um profissional."
+        )
+
+        recommendations = [
+            "Converse com alguém de confiança sobre como você está se sentindo.",
+            "Evite enfrentar o sofrimento completamente sozinho.",
+            "Considere buscar acompanhamento psicológico ou médico.",
+        ]
+
+        when_to_seek_help = (
+            "Procure ajuda quando os sentimentos persistirem, se agravarem "
+            "ou interferirem nas atividades diárias."
+        )
+
+    elif classification == "mixed_distress":
+        summary = (
+            "O texto contém sinais relacionados tanto à ansiedade "
+            "quanto à tristeza ou ao desânimo."
+        )
+
+        educational_information = (
+            "Os sinais encontrados são apenas indicadores textuais e não "
+            "representam um diagnóstico clínico."
+        )
+
+        recommendations = [
+            "Registre quando e em quais situações esses sentimentos aparecem.",
+            "Converse com alguém de confiança.",
+            "Procure avaliação de um profissional de saúde mental.",
+        ]
+
+        when_to_seek_help = (
+            "Busque ajuda profissional se os sentimentos estiverem causando "
+            "sofrimento intenso ou prejudicando sua rotina."
+        )
+
+    elif classification == "positive":
+        summary = (
+            "O texto contém expressões associadas a uma percepção positiva."
+        )
+
+        educational_information = (
+            "Essa identificação considera apenas palavras presentes no texto "
+            "e não determina o estado emocional completo da pessoa."
+        )
+
+        recommendations = [
+            "Continue observando e cuidando do seu bem-estar.",
+            "Mantenha contato com pessoas que ofereçam apoio.",
+        ]
+
+        when_to_seek_help = (
+            "Mesmo em momentos positivos, procure ajuda caso exista sofrimento "
+            "emocional que não tenha sido mencionado no texto."
+        )
+
     else:
-        welcoming_summary = "Obrigado por confiar e compartilhar o que você está sentindo. Compreendo que este é um momento delicado e você merece ser ouvido com empatia e respeito."
-        educational_info = "Os sinais identificados (como alterações de sono, ansiedade ou desânimo) são respostas comuns do organismo a períodos de sobrecarga ou estresse intenso. Esta análise tem finalidade educacional e não substitui diagnóstico clínico."
-        suggested_cares = [
-            "Conversar abertamente com uma pessoa de sua confiança.",
-            "Manter a rotina básica de descanso e pausas na jornada diária.",
-            "Praticar rotinas leves como exercícios de respiração 4-7-8.",
-            "Considerar o agendamento de uma consulta de acolhimento psicológico."
+        summary = (
+            "Não foram encontrados sinais textuais suficientes para "
+            "classificar a mensagem."
+        )
+
+        educational_information = (
+            "A ausência de palavras específicas não significa ausência de "
+            "sofrimento. Esta ferramenta realiza apenas uma análise educativa."
+        )
+
+        recommendations = [
+            "Descreva com mais detalhes o que está sentindo, caso se sinta confortável.",
+            "Procure apoio profissional se houver preocupação com sua saúde mental.",
         ]
-        when_to_seek_help = "Procure ajuda profissional imediata ou atendimento especializado se os sintomas persistirem por semanas, se intensificarem ou prejudicarem suas atividades básicas de trabalho e convivência."
 
-    sources = [
-        "DSM-5-TR (Manual Diagnóstico e Estatístico de Transtornos Mentais)",
-        "WHO mhGAP (Programa de Ação para Lacunas em Saúde Mental)",
-        "NICE Guidelines (Diretrizes de Saúde Mental)",
-        "Ministério da Saúde (Rede de Atenção Psicossocial - RAPS)",
-        "Material Oficial CVV (Centro de Valorização da Vida)"
-    ]
-
-    safety_notice = "Ferramenta exclusivamente educacional de apoio conversacional. Em caso de sofrimento intenso ou crise, ligue 188 (CVV) ou procure atendimento de emergência."
+        when_to_seek_help = (
+            "Procure ajuda sempre que houver sofrimento intenso, persistente "
+            "ou dificuldade para realizar atividades cotidianas."
+        )
 
     return {
-        "report_type": report_type,
-        "welcoming_summary": welcoming_summary,
-        "signs": signs if report_type != "positive" else ["Sensação de bem-estar e realização"],
-        "educational_info": educational_info,
-        "suggested_cares": suggested_cares,
+        "classification": classification,
+        "summary": summary,
+        "observed_signs": observed_signs,
+        "educational_information": educational_information,
+        "recommendations": recommendations,
         "when_to_seek_help": when_to_seek_help,
-        "sources": sources,
-        "safety_notice": safety_notice,
-        "risk_warning": risk
+        "sources": [
+            "Organização Mundial da Saúde — mhGAP",
+            "Ministério da Saúde",
+            "Centro de Valorização da Vida",
+        ],
+        "disclaimer": (
+            "Esta análise possui finalidade educativa e não substitui "
+            "avaliação médica ou psicológica."
+        ),
     }
 
-def get_stats():
-    df = load_dataset()
-    if df is None:
+
+def get_stats() -> dict[str, Any]:
+    if not os.path.exists(DATASET_PATH):
         return {
-            "records": 0,
-            "categories_count": 0,
-            "missing_values": 0,
-            "average_length": 0.0,
-            "categories": {}
+            "total_records": 0,
+            "total_columns": 0,
+            "columns": [],
+            "tag_distribution": {},
+            "average_text_length": 0.0,
+            "minimum_text_length": 0,
+            "maximum_text_length": 0,
+            "dataset_found": False,
         }
-    
+
+    try:
+        dataframe = pd.read_csv(DATASET_PATH)
+
+    except (pd.errors.EmptyDataError, pd.errors.ParserError):
+        return {
+            "total_records": 0,
+            "total_columns": 0,
+            "columns": [],
+            "tag_distribution": {},
+            "average_text_length": 0.0,
+            "minimum_text_length": 0,
+            "maximum_text_length": 0,
+            "dataset_found": True,
+        }
+
+    text_column = None
+
+    for candidate in [
+        "post_content",
+        "text",
+        "content",
+        "message",
+    ]:
+        if candidate in dataframe.columns:
+            text_column = candidate
+            break
+
+    if text_column:
+        text_lengths = (
+            dataframe[text_column]
+            .fillna("")
+            .astype(str)
+            .str.len()
+        )
+
+        average_text_length = round(
+            float(text_lengths.mean()),
+            4,
+        )
+
+        minimum_text_length = int(
+            text_lengths.min()
+        )
+
+        maximum_text_length = int(
+            text_lengths.max()
+        )
+
+    else:
+        average_text_length = 0.0
+        minimum_text_length = 0
+        maximum_text_length = 0
+
+    if "tag" in dataframe.columns:
+        tag_distribution = {
+            str(tag): int(count)
+            for tag, count in (
+                dataframe["tag"]
+                .fillna("Sem classificação")
+                .value_counts()
+                .to_dict()
+                .items()
+            )
+        }
+
+    else:
+        tag_distribution = {}
+
     return {
-        "records": len(df),
-        "categories_count": int(df['tag'].nunique()),
-        "missing_values": int(df.isnull().sum().sum()),
-        "average_length": round(float(df['post_content'].astype(str).str.len().mean()), 2),
-        "categories": {cat: int(count) for cat, count in df['tag'].value_counts().items()}
+        "total_records": int(len(dataframe)),
+        "total_columns": int(len(dataframe.columns)),
+        "columns": dataframe.columns.tolist(),
+        "tag_distribution": tag_distribution,
+        "average_text_length": average_text_length,
+        "minimum_text_length": minimum_text_length,
+        "maximum_text_length": maximum_text_length,
+        "dataset_found": True,
     }
