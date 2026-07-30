@@ -10,16 +10,16 @@ Este projeto está sendo desenvolvido para a disciplina de Tópicos Especiais em
 
 ---
 
-## Status Atual do Projeto
+## 🚀 Status Atual do Projeto
 
-- **Frontend**: Migrado e reconstruído em **React + Vite + TailwindCSS + Lucide React + Framer Motion**.
-- **Backend**: API REST em **FastAPI + Pydantic** com endpoints de análise estruturada e métricas de dataset.
+- **Frontend**: Migrado e reconstruído em **React 18 + Vite + TailwindCSS + Lucide React + Framer Motion**.
+- **Backend**: API REST em **FastAPI + Pydantic** integrada ao **Ollama** (`gemma3:4b` e `nomic-embed-text`) e **ChromaDB** para busca semântica RAG.
 - **Identidade Visual**: Paleta de cores sólidas oficiais (`#8D3F9E` Roxo, `#ED4F9D` Rosa, `#FCF8F7` Fundo) com tipografia Manrope & DM Sans.
 - **UX**: Emotional Check-in de humor, respostas conversacionais com cartões sanfonados expansíveis da estrutura RAG de 7 seções, e modais interativos de *Cuidado Diário*.
 
 ---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
 ### Frontend
 - **React 18** + **Vite**
@@ -31,24 +31,28 @@ Este projeto está sendo desenvolvido para a disciplina de Tópicos Especiais em
 - **Python 3.10+**
 - **FastAPI** + **Uvicorn**
 - **Pydantic**
-- **Pandas**
-- **FAISS** & **Sentence Transformers** (Busca semântica RAG)
+- **ChromaDB** (Banco de dados vetorial)
+- **Ollama** (`gemma3:4b` para geração e `nomic-embed-text` para embeddings)
+- **Pandas**, **PyMuPDF** & **PyPDF** (processamento de relatos e documentos)
 
 ---
 
-## Estrutura de Diretórios
+## 📁 Estrutura de Diretórios
 
 ```
 zophiaIA/
 ├── backend/
 │   ├── main.py                # Ponto de entrada FastAPI (CORS, Rotas)
 │   ├── models/                # Schemas Pydantic de validação
-│   └── services/              # Serviços de classificação e análise de relatos
+│   ├── routes/                # Rotas REST (/api/chat, /api/analyze, /api/dataset/stats)
+│   ├── scripts/               # Scripts auxiliares (ex: index_documents.py)
+│   ├── services/              # Serviços de RAG, Ollama LLM, Embeddings e Análise
+│   └── vector_db/             # Banco vetorial local ChromaDB
 ├── frontend/
 │   ├── index.html             # HTML principal com favicon
 │   ├── package.json           # Dependências React e Scripts Vite
 │   ├── tailwind.config.js     # Configuração de temas e cores sólidas Zophia
-│   ├── public/                # Assets e logos estáticas (zophia_logo, zophia_mini_logo)
+│   ├── public/                # Assets e logos estáticas
 │   └── src/
 │       ├── App.jsx            # Aplicação React principal
 │       ├── components/        # Sidebar, Header, ChatMessage, ChatInput, ToolModal, etc.
@@ -60,60 +64,108 @@ zophiaIA/
 
 ---
 
-## Como Instalar e Rodar o Projeto (Status Atual)
+## 🛠️ Como Instalar e Rodar o Projeto (Guia Passo a Passo)
 
-### 1. Clonar a branch `new-frontend`
+### Pré-requisitos Necessários
+1. **Node.js** (v18 ou superior)
+2. **Python** (v3.10 ou superior)
+3. **Ollama** instalado e em execução no sistema.
+
+---
+
+### Passo 1: Pré-requisito do Ollama (LLM & Embeddings)
+O backend da Zophia utiliza o Ollama localmente para a geração de respostas e embeddings.
+
+1. Instale o [Ollama](https://ollama.com/) e certifique-se de que ele esteja rodando (ícone do Ollama na barra de tarefas ou serviço ativo).
+2. No seu terminal, baixe os modelos necessários:
+```bash
+ollama pull nomic-embed-text
+ollama pull gemma3:4b
+```
+
+---
+
+### Passo 2: Clonar o Repositório
 ```bash
 git clone https://github.com/PabloOdilon11/zophiaIA.git
 cd zophiaIA
 git checkout new-frontend
 ```
 
-### 2. Configurar e Iniciar o Backend (FastAPI)
+---
 
-1. Crie e ative um ambiente virtual Python (opcional, mas recomendado):
+### Passo 3: Configurar e Iniciar o Backend (FastAPI)
+
+1. No diretório raiz do projeto (`zophiaIA`), crie e ative um ambiente virtual Python:
 ```bash
+# Criar o ambiente virtual:
 python -m venv .venv
-# No Windows (PowerShell):
+
+# Ativar no Windows (PowerShell):
 .\.venv\Scripts\Activate.ps1
-# No Linux/Mac:
+
+# Ativar no Linux/Mac:
 source .venv/bin/activate
 ```
 
-2. Instale as dependências Python:
+2. Instale todas as dependências do backend:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Inicie o servidor do Backend na porta `8000`:
+3. *(Opcional)* Indexar a base de documentos no ChromaDB (se for a primeira execução ou se a pasta `backend/vector_db` não existir):
+```bash
+python -m backend.scripts.index_documents
+```
+
+4. Inicie o servidor do Backend **a partir do diretório raiz**:
 ```bash
 python -m uvicorn backend.main:app --reload --port 8000
 ```
-> O backend estará rodando em `http://localhost:8000` (Documentação Swagger em `http://localhost:8000/docs`).
+> O backend estará disponível em `http://localhost:8000` (Documentação Swagger em `http://localhost:8000/docs`).
 
 ---
 
-### 3. Configurar e Iniciar o Frontend (React + Vite)
+### Passo 4: Configurar e Iniciar o Frontend (React + Vite)
 
-Em uma nova janela de terminal, navegue até a pasta `frontend`:
+Abra uma **segunda janela de terminal**, navegue até a pasta `frontend` e execute:
 
-1. Instale as dependências do Node:
 ```bash
+# Entrar na pasta do frontend:
 cd frontend
-npm install
-```
 
-2. Inicie o servidor de desenvolvimento do Frontend:
-```bash
+# Instalar as dependências do Node:
+npm install
+
+# Iniciar o servidor de desenvolvimento:
 npm run dev
 ```
 
-3. Acesse a aplicação no seu navegador:
-> **`http://localhost:3000`** (ou a porta indicada pelo Vite).
+> O frontend estará rodando em **`http://localhost:3000`** (ou porta informada pelo Vite).
 
 ---
 
-## Estrutura da Resposta RAG (7 Seções)
+## ❓ Solução de Problemas Comuns (Troubleshooting)
+
+### 1. `ModuleNotFoundError: No module named 'chromadb'` ou `httpx`
+- **Causa**: O ambiente virtual Python não foi ativado ou as dependências não foram instaladas via `requirements.txt`.
+- **Solução**: Certifique-se de ter rodado `pip install -r requirements.txt` no seu `.venv`.
+
+### 2. Mensagem: *"Não foi possível conectar ao Ollama. Verifique se ele está em execução."*
+- **Causa**: O serviço do Ollama não está rodando ou os modelos não foram baixados.
+- **Solução**: Abra o Ollama e execute `ollama pull nomic-embed-text` e `ollama pull gemma3:4b`.
+
+### 3. `ModuleNotFoundError: No module named 'backend'` ao rodar o Uvicorn
+- **Causa**: O comando do Uvicorn foi executado de dentro da pasta `backend/` em vez da raiz do projeto.
+- **Solução**: Volte para a raiz (`cd ..`) e execute `python -m uvicorn backend.main:app --reload --port 8000`.
+
+### 4. Mensagem no Chat: *"Não consegui me conectar ao serviço da Zophia agora"*
+- **Causa**: O frontend (porta 3000) não conseguiu se comunicar com o backend (porta 8000).
+- **Solução**: Verifique se o servidor do Uvicorn está rodando na porta 8000.
+
+---
+
+## 📋 Estrutura da Resposta RAG (7 Seções)
 
 As respostas geradas e disponibilizadas sob demanda seguem os parâmetros da base documental:
 
@@ -127,37 +179,7 @@ As respostas geradas e disponibilizadas sob demanda seguem os parâmetros da bas
 
 ---
 
-## Status
-
-Semana 1
-
-- ✔ Estudo e exploração do Dataset
-- ✔ Seleção dos documentos do RAG
-- ✔ Preparação da base documental
-- ✔ Definição da Arquitetura
-
-Semana 2
-- ✔ Implementar Chunking
-- 🚧 Gerar os embeddings
-- ✔ Criar o banco vetorial
-- 🚧 Validar a busca semântica
-
-Semana 3
-- ✔ Integrar RAG ao LLM
-- ❌ Desenvolver os prompts
-- ❌ Estruturar as Respostas
-- ❌ Validar as fontes recuperadas
-
-Semana 4
-- 🚧 Desenvolver a interface
-- ❌ Realizar testes finais
-- ❌ Fazer a documentação
-- 🚧 Realizar a apresentação
-- ❌ Gravação do vídeo
-
----
-
-## Integrantes
+## 👥 Integrantes
 
 - Pablo Odilon Agra de Queiroz
 - Deyvid Jeronimo De Araujo Macedo 
