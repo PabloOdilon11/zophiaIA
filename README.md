@@ -1,185 +1,407 @@
-# Zophia - Assistente Inteligente de Apoio à Saúde Mental 💜
+🧠 Zophia Lite
 
-## Sobre o Projeto
 
-O **Zophia** é uma aplicação web moderna voltada para o acolhimento, escuta atenta e apoio educacional em saúde mental. 
 
-O sistema combina um **Frontend moderno em React** (estilo ChatGPT/Claude) com um **Backend em Python/FastAPI** embasado na arquitetura **Retrieval-Augmented Generation (RAG)** e documentos científicos de referência.
+Assistente virtual educativa para apoio em saúde mental, utilizando Large Language Models, Recuperação Aumentada por Geração (RAG), embeddings e banco vetorial.
 
-Este projeto está sendo desenvolvido para a disciplina de Tópicos Especiais em Computação da Universidade Estadual da Paraíba (**UEPB**).
+📖 Sobre o projeto
 
----
+A Zophia Lite é uma aplicação web conversacional desenvolvida como projeto acadêmico por estudantes do curso de Ciência da Computação da Universidade Estadual da Paraíba (UEPB).
 
-## 🚀 Status Atual do Projeto
+Seu objetivo é oferecer informações educativas sobre saúde mental de forma clara, acolhedora e responsável. A aplicação combina uma interface em React, uma API em FastAPI, o modelo Gemma 3 4B executado localmente pelo Ollama, ChromaDB, embeddings e um pipeline RAG.
 
-- **Frontend**: Migrado e reconstruído em **React 18 + Vite + TailwindCSS + Lucide React + Framer Motion**.
-- **Backend**: API REST em **FastAPI + Pydantic** integrada ao **Ollama** (`gemma3:4b` e `nomic-embed-text`) e **ChromaDB** para busca semântica RAG.
-- **Identidade Visual**: Paleta de cores sólidas oficiais (`#8D3F9E` Roxo, `#ED4F9D` Rosa, `#FCF8F7` Fundo) com tipografia Manrope & DM Sans.
-- **UX**: Emotional Check-in de humor, respostas conversacionais com cartões sanfonados expansíveis da estrutura RAG de 7 seções, e modais interativos de *Cuidado Diário*.
+A Zophia Lite não substitui psicólogos, psiquiatras, médicos ou serviços de emergência.
 
----
+🎯 Objetivos
 
-## 🛠️ Tecnologias Utilizadas
+Fornecer informações educativas sobre saúde mental.
 
-### Frontend
-- **React 18** + **Vite**
-- **TailwindCSS**
-- **Framer Motion** (animações fluidas)
-- **Lucide React** (ícones vetoriais)
+Recuperar conteúdos relevantes de documentos especializados.
 
-### Backend
-- **Python 3.10+**
-- **FastAPI** + **Uvicorn**
-- **Pydantic**
-- **ChromaDB** (Banco de dados vetorial)
-- **Ollama** (`gemma3:4b` para geração e `nomic-embed-text` para embeddings)
-- **Pandas**, **PyMuPDF** & **PyPDF** (processamento de relatos e documentos)
+Reduzir respostas genéricas e fora de contexto.
 
----
+Manter memória da conversa.
 
-## 📁 Estrutura de Diretórios
+Separar perguntas gerais de perguntas relacionadas à saúde mental.
 
-```
+Detectar mensagens críticas e oferecer orientações iniciais de segurança.
+
+✨ Principais funcionalidades
+
+Chat conversacional.
+
+Roteamento inteligente de intenções.
+
+Memória conversacional.
+
+Busca semântica por embeddings.
+
+Recuperação de documentos com RAG.
+
+Respostas fundamentadas com referência ao documento.
+
+Perguntas gerais sem consulta ao banco vetorial.
+
+Respostas locais para data, hora, saudação e identidade.
+
+Tratamento inicial de mensagens de crise.
+
+Execução local do modelo por meio do Ollama.
+
+🏗️ Arquitetura
+
+<p align="center">
+  <img src="docs/arquitetura_zophia.png" alt="Arquitetura da Zophia Lite" width="900">
+</p>
+
+Fluxo principal:
+
+React
+  ↓
+FastAPI
+  ↓
+router.py
+  ├── respostas locais
+  ├── memória
+  ├── perguntas gerais
+  ├── fluxo de crise
+  └── saúde mental
+          ↓
+       Pipeline RAG
+          ↓
+      Embeddings
+          ↓
+       ChromaDB
+          ↓
+         PDFs
+          ↓
+    Gemma 3 4B / Ollama
+          ↓
+     Resposta ao usuário
+
+🧩 Principais módulos
+
+router.py
+
+Classifica a intenção da mensagem antes de qualquer consulta ao modelo ou ao RAG.
+
+Exemplos de intenções:
+
+GREETING
+
+DATETIME
+
+ABOUT_ZOPHIA
+
+MEMORY
+
+GENERAL
+
+MENTAL_HEALTH
+
+CONTEXT_FOLLOW_UP
+
+CRISIS
+
+llm_service.py
+
+Coordena o fluxo de resposta. Recebe a intenção classificada pelo roteador e encaminha a mensagem para o serviço apropriado.
+
+rag_service.py
+
+Executa a busca semântica na base vetorial e recupera os trechos mais relevantes dos documentos.
+
+embedding_service.py
+
+Transforma perguntas e trechos dos documentos em vetores numéricos.
+
+conversation_service.py
+
+Mantém o histórico recente da conversa e o identificador da sessão.
+
+crisis_service.py
+
+Fornece respostas determinísticas para mensagens explícitas de risco, sem depender da geração livre do modelo.
+
+🛠️ Tecnologias utilizadas
+
+Tecnologia
+
+Finalidade
+
+React
+
+Interface web
+
+FastAPI
+
+API e backend
+
+Python
+
+Serviços e regras de negócio
+
+JavaScript
+
+Desenvolvimento do frontend
+
+Ollama
+
+Execução local dos modelos
+
+Gemma 3 4B
+
+Geração das respostas
+
+nomic-embed-text
+
+Geração de embeddings
+
+ChromaDB
+
+Banco de dados vetorial
+
+RAG
+
+Recuperação de contexto documental
+
+Git e GitHub
+
+Versionamento do projeto
+
+📂 Estrutura do projeto
+
 zophiaIA/
 ├── backend/
-│   ├── main.py                # Ponto de entrada FastAPI (CORS, Rotas)
-│   ├── models/                # Schemas Pydantic de validação
-│   ├── routes/                # Rotas REST (/api/chat, /api/analyze, /api/dataset/stats)
-│   ├── scripts/               # Scripts auxiliares (ex: index_documents.py)
-│   ├── services/              # Serviços de RAG, Ollama LLM, Embeddings e Análise
-│   └── vector_db/             # Banco vetorial local ChromaDB
+│   ├── routes/
+│   ├── services/
+│   ├── knowledge/
+│   ├── vector_db/
+│   └── main.py
 ├── frontend/
-│   ├── index.html             # HTML principal com favicon
-│   ├── package.json           # Dependências React e Scripts Vite
-│   ├── tailwind.config.js     # Configuração de temas e cores sólidas Zophia
-│   ├── public/                # Assets e logos estáticas
-│   └── src/
-│       ├── App.jsx            # Aplicação React principal
-│       ├── components/        # Sidebar, Header, ChatMessage, ChatInput, ToolModal, etc.
-│       └── styles/            # CSS global e diretivas Tailwind
-├── dataset/                   # Relatos utilizados nos testes e análises
-├── documents/                 # Base documental RAG (WHO mhGAP, NICE, DSM-5-TR, RAPS, CVV)
-└── requirements.txt           # Dependências Python do backend
-```
+│   ├── public/
+│   ├── src/
+│   └── package.json
+├── docs/
+│   ├── arquitetura_zophia.png
+│   ├── Relatorio_Tecnico.pdf
+│   └── Manual_Instalacao.pdf
+├── tests/
+│   └── test_cases.md
+├── executavel/
+│   ├── Windows/
+│   └── MacOS/
+├── requirements.txt
+├── .gitignore
+└── README.md
 
----
+⚙️ Pré-requisitos
 
-## 🛠️ Como Instalar e Rodar o Projeto (Guia Passo a Passo)
+Python 3.11 ou superior.
 
-### Pré-requisitos Necessários
-1. **Node.js** (v18 ou superior)
-2. **Python** (v3.10 ou superior)
-3. **Ollama** instalado e em execução no sistema.
+Node.js LTS.
 
----
+npm.
 
-### Passo 1: Pré-requisito do Ollama (LLM & Embeddings)
-O backend da Zophia utiliza o Ollama localmente para a geração de respostas e embeddings.
+Ollama.
 
-1. Instale o [Ollama](https://ollama.com/) e certifique-se de que ele esteja rodando (ícone do Ollama na barra de tarefas ou serviço ativo).
-2. No seu terminal, baixe os modelos necessários:
-```bash
-ollama pull nomic-embed-text
-ollama pull gemma3:4b
-```
+Git.
 
----
+📥 Instalação
 
-### Passo 2: Clonar o Repositório
-```bash
+1. Clonar o repositório
+
 git clone https://github.com/PabloOdilon11/zophiaIA.git
 cd zophiaIA
 git checkout new-frontend
-```
 
----
+2. Criar o ambiente virtual
 
-### Passo 3: Configurar e Iniciar o Backend (FastAPI)
-
-1. No diretório raiz do projeto (`zophiaIA`), crie e ative um ambiente virtual Python:
-```bash
-# Criar o ambiente virtual:
 python -m venv .venv
 
-# Ativar no Windows (PowerShell):
-.\.venv\Scripts\Activate.ps1
+Windows:
 
-# Ativar no Linux/Mac:
+.venv\Scripts\activate
+
+Linux/macOS:
+
 source .venv/bin/activate
-```
 
-2. Instale todas as dependências do backend:
-```bash
+3. Instalar as dependências do backend
+
 pip install -r requirements.txt
-```
 
-3. *(Opcional)* Indexar a base de documentos no ChromaDB (se for a primeira execução ou se a pasta `backend/vector_db` não existir):
-```bash
-python -m backend.scripts.index_documents
-```
+4. Instalar as dependências do frontend
 
-4. Inicie o servidor do Backend **a partir do diretório raiz**:
-```bash
-python -m uvicorn backend.main:app --reload --port 8000
-```
-> O backend estará disponível em `http://localhost:8000` (Documentação Swagger em `http://localhost:8000/docs`).
-
----
-
-### Passo 4: Configurar e Iniciar o Frontend (React + Vite)
-
-Abra uma **segunda janela de terminal**, navegue até a pasta `frontend` e execute:
-
-```bash
-# Entrar na pasta do frontend:
 cd frontend
-
-# Instalar as dependências do Node:
 npm install
+cd ..
 
-# Iniciar o servidor de desenvolvimento:
+5. Baixar os modelos do Ollama
+
+ollama pull gemma3:4b
+ollama pull nomic-embed-text
+
+▶️ Execução
+
+Backend
+
+Na raiz do projeto:
+
+python -m uvicorn backend.main:app --reload
+
+Backend disponível em:
+
+http://127.0.0.1:8000
+
+Documentação Swagger:
+
+http://127.0.0.1:8000/docs
+
+Frontend
+
+Em outro terminal:
+
+cd frontend
 npm run dev
-```
 
-> O frontend estará rodando em **`http://localhost:3000`** (ou porta informada pelo Vite).
+Frontend disponível em:
 
----
+http://127.0.0.1:5173
 
-## ❓ Solução de Problemas Comuns (Troubleshooting)
+📚 Base documental
 
-### 1. `ModuleNotFoundError: No module named 'chromadb'` ou `httpx`
-- **Causa**: O ambiente virtual Python não foi ativado ou as dependências não foram instaladas via `requirements.txt`.
-- **Solução**: Certifique-se de ter rodado `pip install -r requirements.txt` no seu `.venv`.
+A base utilizada pelo pipeline RAG inclui documentos como:
 
-### 2. Mensagem: *"Não foi possível conectar ao Ollama. Verifique se ele está em execução."*
-- **Causa**: O serviço do Ollama não está rodando ou os modelos não foram baixados.
-- **Solução**: Abra o Ollama e execute `ollama pull nomic-embed-text` e `ollama pull gemma3:4b`.
+anxiety.pdf
 
-### 3. `ModuleNotFoundError: No module named 'backend'` ao rodar o Uvicorn
-- **Causa**: O comando do Uvicorn foi executado de dentro da pasta `backend/` em vez da raiz do projeto.
-- **Solução**: Volte para a raiz (`cd ..`) e execute `python -m uvicorn backend.main:app --reload --port 8000`.
+mhgap.pdf
 
-### 4. Mensagem no Chat: *"Não consegui me conectar ao serviço da Zophia agora"*
-- **Causa**: O frontend (porta 3000) não conseguiu se comunicar com o backend (porta 8000).
-- **Solução**: Verifique se o servidor do Uvicorn está rodando na porta 8000.
+cartilha_cvv.pdf
 
----
+Os documentos são divididos em trechos, transformados em embeddings e armazenados no ChromaDB.
 
-## 📋 Estrutura da Resposta RAG (7 Seções)
+🧪 Testes
 
-As respostas geradas e disponibilizadas sob demanda seguem os parâmetros da base documental:
+Os testes funcionais verificam:
 
-1. **Resumo Acolhedor** (`RAG: LLM`)
-2. **Sinais Observados** (`RAG: DSM-5-TR`)
-3. **Informações Educativas** (`RAG: DSM-5-TR / NICE`)
-4. **Cuidados Sugeridos** (`RAG: WHO mhGAP / NICE`)
-5. **Quando Procurar Ajuda Profissional** (`RAG: mhGAP / RAPS`)
-6. **Fontes Utilizadas** (Base Documental)
-7. **Aviso de Segurança** (Orientação educacional e CVV 188)
+Caso
 
----
+Entrada
 
-## 👥 Integrantes
+Intenção esperada
+
+T01
+
+Oi
+
+GREETING
+
+T02
+
+Que dia é hoje?
+
+DATETIME
+
+T03
+
+Quem criou você?
+
+ABOUT_ZOPHIA
+
+T04
+
+Quanto é 2 + 2?
+
+GENERAL
+
+T05
+
+O que é ansiedade?
+
+MENTAL_HEALTH
+
+T06
+
+Explique melhor
+
+CONTEXT_FOLLOW_UP
+
+T07
+
+O que eu perguntei antes?
+
+MEMORY
+
+T08
+
+Mensagem explícita de risco
+
+CRISIS
+
+Os casos completos estão disponíveis em:
+
+tests/test_cases.md
+
+⚠️ Limitações
+
+O histórico é armazenado apenas durante a execução do backend.
+
+A aplicação depende do Ollama instalado localmente.
+
+O desempenho varia conforme o hardware.
+
+A base documental ainda é limitada.
+
+O fluxo de crise não substitui atendimento profissional.
+
+A aplicação ainda não está hospedada publicamente.
+
+🔮 Trabalhos futuros
+
+Persistência das conversas em banco de dados.
+
+Máquina de estados completa para o fluxo de crise.
+
+Hospedagem em nuvem.
+
+Autenticação de usuários.
+
+Painel administrativo.
+
+Ampliação da base documental.
+
+Avaliações automáticas de relevância do RAG.
+
+Aplicativo para dispositivos móveis.
+
+Recursos adicionais de acessibilidade.
+
+📄 Documentação
+
+Relatório técnico: docs/Relatorio_Tecnico.pdf
+
+Manual de instalação: docs/Manual_Instalacao.pdf
+
+Casos de teste: tests/test_cases.md
+
+Vídeo demonstrativo: adicionar link após a publicação.
+
+👨‍💻 Autores
+
+Pablo Odilon Agra de Queiroz
+
+Luiz José Mendonça Duarte
+
+Kaio Emanuel Rosemiro de Carvalho
+
+Deyvid Jerônimo de Araújo Macêdo
+
+Universidade Estadual da Paraíba — UEPBCurso de Ciência da ComputaçãoDisciplina: Tópicos Especiais em Computação
+
+📜 Licença
+
+Projeto desenvolvido para fins acadêmicos e educacionais.
 
 - Pablo Odilon Agra de Queiroz
 - Deyvid Jeronimo De Araujo Macedo 
