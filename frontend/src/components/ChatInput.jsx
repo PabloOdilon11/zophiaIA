@@ -64,7 +64,7 @@ export default function ChatInput({ onSendMessage, isLoading }) {
         </button>
       </form>
       <p className="text-[11px] text-center text-gray-400 mt-2 font-medium">
-        Pressione Enter para enviar • Shift + Enter para quebra de linha • Mensagens tratadas com confidencialidade
+        Pressione Enter para enviar • Shift + Enter para quebra de linha
       </p>
     </div>
   );
