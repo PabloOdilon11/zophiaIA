@@ -293,7 +293,7 @@ export default function App() {
             onClick={() => setCaresOpen(!caresOpen)}
             title={caresOpen ? "Recolher Cuidado Diário" : "Abrir Cuidado Diário"}
             aria-label={caresOpen ? "Recolher Cuidado Diário" : "Abrir Cuidado Diário"}
-            className={`absolute top-14 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-zophia-purple border border-zophia-border shadow-sm hover:bg-zophia-pink/10 hover:shadow-md transition-all ${
+            className={`absolute top-20 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-zophia-purple border border-zophia-border shadow-sm hover:bg-zophia-pink/10 hover:shadow-md transition-all ${
               caresOpen ? 'opacity-70 hover:opacity-100' : 'opacity-100'
             }`}
           >
