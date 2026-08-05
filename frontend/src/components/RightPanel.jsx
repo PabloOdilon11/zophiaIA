@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Leaf, BookOpen, Heart, Headphones, Sun, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Leaf, BookOpen, Heart, Headphones, Sun, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import ToolCard from './ToolCard';
 
 export default function RightPanel({ onSelectTool }) {
@@ -44,7 +44,7 @@ export default function RightPanel({ onSelectTool }) {
           aria-label="Expandir Cuidado Diário"
           className="mt-4 p-2 rounded-xl text-zophia-purple hover:bg-zophia-pink/10 transition-colors"
         >
-          <ChevronLeft size={18} />
+          <PanelRightClose size={18} />
         </button>
       </aside>
     );
@@ -64,7 +64,7 @@ export default function RightPanel({ onSelectTool }) {
             aria-label="Recolher Cuidado Diário"
             className="p-2 rounded-xl text-zophia-purple hover:bg-zophia-pink/10 transition-colors -mt-1 -mr-1"
           >
-            <ChevronRight size={18} />
+            <PanelRightOpen size={18} />
           </button>
         </div>
 
