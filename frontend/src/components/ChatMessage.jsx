@@ -97,6 +97,19 @@ export default function ChatMessage({ message }) {
           </p>
         </div>
 
+        {message.timestamp && (
+          <div
+            className={`flex text-[10px] font-medium text-slate-400 ${
+              isUser ? 'justify-end pr-1' : 'justify-start pl-1'
+            }`}
+          >
+            {new Date(message.timestamp).toLocaleTimeString(
+              'pt-BR',
+              { hour: '2-digit', minute: '2-digit' },
+            )}
+          </div>
+        )}
+
         {/* Análise estruturada */}
         {hasAnalysis && (
           <div className="w-full space-y-2.5">

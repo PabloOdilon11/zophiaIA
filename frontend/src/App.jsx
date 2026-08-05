@@ -142,6 +142,7 @@ export default function App() {
       id: `${Date.now()}-user`,
       sender: 'user',
       text: cleanText,
+      timestamp: new Date().toISOString(),
     };
 
     setChats((previousChats) =>
@@ -224,6 +225,7 @@ export default function App() {
         sender: 'zophia',
         text: data.response,
         model: data.model,
+        timestamp: new Date().toISOString(),
       };
 
       addMessageToChat(
@@ -242,6 +244,7 @@ export default function App() {
         text:
           'Não consegui me conectar ao serviço da Zophia agora. Verifique se o backend e o Ollama estão ligados e tente novamente.',
         isError: true,
+        timestamp: new Date().toISOString(),
       };
 
       addMessageToChat(
