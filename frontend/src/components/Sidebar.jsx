@@ -46,8 +46,15 @@ export default function Sidebar({ isOpen, onClose, activeTab, setActiveTab, chat
 
           {/* Navigation Menu */}
           <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Conversas recentes</p>
+            <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Conversas recentes ({chats.length})
+            </p>
             <div className="space-y-1 max-h-48 overflow-y-auto">
+              {chats.length === 0 && (
+                <p className="px-3 py-2 text-xs text-gray-400">
+                  Nenhuma conversa ainda. Clique em "Nova conversa" para começar.
+                </p>
+              )}
               {chats.map(chat => (
                 <button
                   key={chat.id}
