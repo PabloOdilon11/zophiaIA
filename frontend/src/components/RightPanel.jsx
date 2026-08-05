@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Leaf, BookOpen, Heart, Headphones, Sun, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Leaf, BookOpen, Heart, Headphones, Sun, PanelRightClose, PanelRightOpen, Sparkles } from 'lucide-react';
 import ToolCard from './ToolCard';
 
 export default function RightPanel({ onSelectTool }) {
@@ -35,68 +35,60 @@ export default function RightPanel({ onSelectTool }) {
     }
   ];
 
-  if (isCollapsed) {
-    return (
-      <aside className="w-10 border-l border-zophia-border bg-white/50 flex flex-col items-center hidden lg:flex overflow-y-auto">
-        <button
-          onClick={() => setIsCollapsed(false)}
-          title="Expandir Cuidado Diário"
-          aria-label="Expandir Cuidado Diário"
-          className="mt-4 p-2 rounded-xl text-zophia-purple hover:bg-zophia-pink/10 transition-colors"
-        >
-          <PanelRightClose size={18} />
-        </button>
-      </aside>
-    );
-  }
-
   return (
-    <aside className="w-80 border-l border-zophia-border bg-white/50 p-5 flex flex-col justify-between hidden lg:flex overflow-y-auto">
-      <div className="space-y-6">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="font-heading font-bold text-base text-zophia-purple">Cuidado Diário</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Recursos da Zophia para o seu bem-estar</p>
-          </div>
-          <button
-            onClick={() => setIsCollapsed(true)}
-            title="Recolher Cuidado Diário"
-            aria-label="Recolher Cuidado Diário"
-            className="p-2 rounded-xl text-zophia-purple hover:bg-zophia-pink/10 transition-colors -mt-1 -mr-1"
-          >
-            <PanelRightOpen size={18} />
-          </button>
-        </div>
+    <div className="flex hidden lg:flex">
+      {/* Toggle button, always outside the panel */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        title={isCollapsed ? "Abrir Cuidado Diário" : "Recolher Cuidado Diário"}
+        aria-label={isCollapsed ? "Abrir Cuidado Diário" : "Recolher Cuidado Diário"}
+        className="w-10 shrink-0 border-l border-zophia-border bg-white/50 flex flex-col items-center justify-start pt-4 text-zophia-purple hover:bg-zophia-pink/10 transition-colors"
+      >
+        {isCollapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
+        <span className="text-[9px] font-semibold mt-1 px-1 text-center leading-tight">
+          {isCollapsed ? 'Abrir' : 'Fechar'}
+        </span>
+      </button>
 
-        <div className="space-y-3">
-          {tools.map(t => (
-            <ToolCard 
-              key={t.id}
-              icon={t.icon}
-              title={t.title}
-              description={t.description}
-              tag={t.tag}
-              onClick={() => onSelectTool(t)}
-            />
-          ))}
-        </div>
+      {!isCollapsed && (
+        <aside className="w-80 border-l border-zophia-border bg-white/50 p-5 flex flex-col justify-between overflow-y-auto">
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-heading font-bold text-base text-zophia-purple">Cuidado Diário</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Recursos da Zophia para o seu bem-estar</p>
+            </div>
 
-        {/* Daily Message Card */}
-        <div className="bg-zophia-sidebar border border-zophia-pink/20 rounded-2xl p-4 mt-6 text-center space-y-2 relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 text-zophia-pink/20">
-            <Sun size={60} />
+            <div className="space-y-3">
+              {tools.map(t => (
+                <ToolCard 
+                  key={t.id}
+                  icon={t.icon}
+                  title={t.title}
+                  description={t.description}
+                  tag={t.tag}
+                  onClick={() => onSelectTool(t)}
+                />
+              ))}
+            </div>
+
+            {/* Daily Message Card */}
+            <div className="bg-zophia-sidebar border border-zophia-pink/20 rounded-2xl p-4 mt-6 text-center space-y-2 relative overflow-hidden">
+              <div className="absolute -top-3 -right-3 text-zophia-pink/20">
+                <Sun size={60} />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zophia-pink bg-white/80 px-2.5 py-0.5 rounded-full inline-block">
+                Mensagem do dia
+              </span>
+              <p className="font-heading font-bold text-sm text-zophia-purple italic">
+                "Você não precisa resolver tudo hoje."
+              </p>
+              <div className="flex justify-center pt-1 text-zophia-pink">
+                <Heart size={14} className="fill-zophia-pink" />
+              </div>
+            </div>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zophia-pink bg-white/80 px-2.5 py-0.5 rounded-full inline-block">
-            Mensagem do dia
-          </span>
-          <p className="font-heading font-bold text-sm text-zophia-purple italic">
-            "Você não precisa resolver tudo hoje."
-          </p>
-          <div className="flex justify-center pt-1 text-zophia-pink">
-            <Heart size={14} className="fill-zophia-pink" />
-          </div>
-        </div>
-      </div>
-    </aside>
+        </aside>
+      )}
+    </div>
   );
 }
