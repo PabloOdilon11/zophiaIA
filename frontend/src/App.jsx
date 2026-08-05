@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { PanelRightOpen, PanelRightClose } from 'lucide-react';
 
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -17,6 +18,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [selectedTool, setSelectedTool] = useState(null);
+  const [caresOpen, setCaresOpen] = useState(true);
 
   const [chats, setChats] = useState([
     {
@@ -279,12 +281,25 @@ export default function App() {
         onSelectChat={handleSelectChat}
       />
 
-      <div className="flex h-full min-w-0 flex-1 flex-col">
+      <div className="relative flex h-full min-w-0 flex-1 flex-col">
         <Header
           onOpenSidebar={() =>
             setSidebarOpen(true)
           }
         />
+
+        {activeTab === 'chat' && (
+          <button
+            onClick={() => setCaresOpen(!caresOpen)}
+            title={caresOpen ? "Recolher Cuidado Diário" : "Abrir Cuidado Diário"}
+            aria-label={caresOpen ? "Recolher Cuidado Diário" : "Abrir Cuidado Diário"}
+            className={`absolute top-14 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-zophia-purple border border-zophia-border shadow-sm hover:bg-zophia-pink/10 hover:shadow-md transition-all ${
+              caresOpen ? 'opacity-70 hover:opacity-100' : 'opacity-100'
+            }`}
+          >
+            {caresOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+          </button>
+        )}
 
         <main className="relative flex-1 overflow-y-auto">
           {activeTab === 'chat' && (
@@ -362,7 +377,7 @@ export default function App() {
         )}
       </div>
 
-      {activeTab === 'chat' && (
+      {activeTab === 'chat' && caresOpen && (
         <RightPanel
           onSelectTool={handleSelectTool}
         />
