@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Heart } from 'lucide-react';
+import { Menu, Heart, ShieldCheck } from 'lucide-react';
 
 export default function Header({ onOpenSidebar }) {
   return (
@@ -24,6 +24,10 @@ export default function Header({ onOpenSidebar }) {
       <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
         <Heart size={14} className="text-zophia-pink fill-zophia-pink" />
         <span className="hidden sm:inline">Ambiente Seguro & Acolhedor</span>
+        <span className="hidden md:inline-flex items-center gap-1 bg-zophia-purple/10 text-zophia-purple px-2 py-0.5 rounded-full border border-zophia-purple/20">
+          <ShieldCheck size={12} />
+          v1.2
+        </span>
       </div>
     </header>
   );
