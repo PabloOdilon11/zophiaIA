@@ -1,8 +1,14 @@
+chromadb
 faiss-cpu
+fastapi
+httpx
 matplotlib
 openai
 pandas
 pymupdf
+pypdf
 python-dotenv
+requests
 sentence-transformers
 streamlit
+uvicorn
